@@ -1,0 +1,15 @@
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+#playground {
+    background-color: rgb(54, 54, 54);
+}
+
+#start {
+    position: fixed;
+    left: 10px;
+    top: 10px;
+}
