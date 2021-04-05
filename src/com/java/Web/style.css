@@ -5,11 +5,51 @@ html, body {
 }
 
 #playground {
-    background-color: rgb(54, 54, 54);
+    background-color: rgb(10, 10, 10);
 }
 
+/*button*/
 #start {
     position: fixed;
     left: 10px;
     top: 10px;
+}
+
+#next {
+    position: fixed;
+    left: 70px;
+    top: 10px;
+}
+
+/*number*/
+#location{
+    color: limegreen;
+    position: fixed;
+    left: 10px;
+    top: 40px;
+}
+
+#count {
+    color: limegreen;
+    position: fixed;
+    left: 10px;
+    top: 70px;
+}
+
+#calculateTime {
+    color: limegreen;
+    position: fixed;
+    left: 140px;
+    top: 10px;
+}
+
+#calculateCount {
+    color: limegreen;
+    position: fixed;
+    left: 140px;
+    top: 40px;
+}
+
+h4 {
+    margin: 0;
 }
