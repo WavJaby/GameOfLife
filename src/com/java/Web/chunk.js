@@ -14,8 +14,6 @@ class Chunk {
     cellData = [];
     //舊的cell data
     oldCellData = [];
-    //已經加過的
-    addedPixel = [];
     //附近有東西的cell
     alivePixelList = [];
     //要更改的cell
@@ -73,9 +71,8 @@ class Chunk {
                 this.calculateCellData(i[0], i[1], 1);
             }
 
-            if (this.addedPixel.indexOf(i[0] + ',' + i[1]) === -1) {
+            if (!this.isLocInAliveList(i[0], i[1])) {
                 this.alivePixelList.push([i[0], i[1]]);
-                this.addedPixel.push(i[0] + ',' + i[1]);
             }
         }
     }
@@ -115,7 +112,6 @@ class Chunk {
 
             if (count === 0 && this.chunkMap[aliveX][aliveY] === 0) {
                 this.alivePixelList.splice(i, 1);
-                this.addedPixel.splice(i, 1);
                 i--;
             } else
                 isAllZero = false;
@@ -177,19 +173,18 @@ class Chunk {
                     this.cellData[x][y] -= 1;
 
                 //加入關注列表
-                if (this.addedPixel.indexOf(x + ',' + y) === -1) {
+                if (!this.isLocInAliveList(x, y)) {
                     this.alivePixelList.push([x, y]);
-                    this.addedPixel.push(x + ',' + y);
                 }
 
                 //要生成的話
                 if (summon) {
-                    const index = this.beforeChange.indexOf(x + ',' + y);
+                    const teamID = this.getBeforeChangePixel(x, y);
                     //這邊有活的
-                    if (index > -1)
-                        if (this.beforeChange[index + 1] === this.teamAID)
+                    if (teamID > -1)
+                        if (teamID === this.teamAID)
                             teamA++;
-                        else if (this.beforeChange[index + 1] === this.teamBID)
+                        else if (teamID === this.teamBID)
                             teamB++;
                 }
             } else {
@@ -227,9 +222,8 @@ class Chunk {
                     nextChunk.oldCellData.push([x, y, -1]);
 
                 //加入關注列表
-                if (nextChunk.addedPixel.indexOf(x + ',' + y) === -1) {
+                if (!nextChunk.isLocInAliveList(x, y)) {
                     nextChunk.alivePixelList.push([x, y]);
-                    nextChunk.addedPixel.push(x + ',' + y);
                 }
 
                 //需要之後處理
@@ -241,12 +235,12 @@ class Chunk {
                 if (summon) {
                     //那個chunk算過了，要拿舊資料
                     if (nextChunk.beforeChange != null) {
-                        const index = nextChunk.beforeChange.indexOf(x + ',' + y);
+                        const teamID = nextChunk.getBeforeChangePixel(x, y);
                         //這邊有活的
-                        if (index > -1)
-                            if (nextChunk.beforeChange[index + 1] === this.teamAID)
+                        if (teamID > -1)
+                            if (teamID === this.teamAID)
                                 teamA++;
-                            else if (nextChunk.beforeChange[index + 1] === this.teamBID)
+                            else if (teamID === this.teamBID)
                                 teamB++;
                     }
                     //還沒算過，直接拿map
@@ -268,6 +262,28 @@ class Chunk {
             else
                 return this.teamBID;
         }
+    }
+
+    isLocInAliveList(x, y) {
+        for (const i of this.alivePixelList) {
+            if (i[0] === x && i[1] === y)
+                return true;
+            //TODO this is for debug
+            this.count++;
+        }
+        return false;
+    }
+
+    getBeforeChangePixel(x, y) {
+        const kernel = x + "," + y;
+        for (let i = 0; i < this.beforeChange.length; i += 2) {
+            if (kernel === this.beforeChange[i])
+                return this.beforeChange[i + 1];
+
+            //TODO this is for debug
+            this.count++;
+        }
+        return -1;
     }
 
     //更新整個chunk

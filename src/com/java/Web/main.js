@@ -80,7 +80,7 @@ window.onload = function () {
         [7, 7],
     ], canvas, 2);
 
-    if(false) {
+    if (false) {
         homeChunk.addCells([[12, 2],
             [13, 2],
             [14, 2],
@@ -533,9 +533,8 @@ const calculateChangeLaterChunk = () => {
         const thisChunk = chunks[i];
         for (const j of thisChunk.oldCellData) {
             thisChunk.cellData[j[0]][j[1]] += j[2];
-            if (thisChunk.addedPixel.indexOf(j[0] + ',' + j[1]) === -1) {
+            if (!thisChunk.isLocInAliveList(j[0], j[1])) {
                 thisChunk.alivePixelList.push([j[0], j[1]]);
-                thisChunk.addedPixel.push(j[0] + ',' + j[1]);
             }
 
             //TODO this is for debug
