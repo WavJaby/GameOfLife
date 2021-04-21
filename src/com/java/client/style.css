@@ -4,13 +4,6 @@
 }
 
 html, body {
-    -webkit-touch-callout: none; /* iOS Safari */
-    -webkit-user-select: none; /* Safari */
-    -khtml-user-select: none; /* Konqueror HTML */
-    -moz-user-select: none; /* Old versions of Firefox */
-    -ms-user-select: none; /* Internet Explorer/Edge */
-    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
-
     width: 100%;
     height: 100%;
     margin: 0;
@@ -41,6 +34,15 @@ html, body {
 }
 
 /*遊戲區*/
+#gameWindow{
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Old versions of Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+}
+
 #gamePage {
     overflow: hidden;
     float: left;
@@ -131,6 +133,10 @@ html, body {
     position: fixed;
     left: 140px;
     top: 40px;
+}
+
+h4 {
+    margin: 0;
 }
 
 h4 {

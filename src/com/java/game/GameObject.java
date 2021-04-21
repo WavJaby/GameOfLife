@@ -17,8 +17,6 @@ public abstract class GameObject {
 
     public abstract void render(Graphics g);
 
-    public abstract void objectAdded();
-
     public int getX() {
         return x;
     }

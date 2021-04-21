@@ -6,18 +6,36 @@
     <link rel="stylesheet" href="style.css">
     <script src="main.js"></script>
     <script src="chunk.js"></script>
+
+    <script src="exampleModels.js"></script>
+    <script src="exampleWindow.js"></script>
+    <script src="miniMap.js"></script>
 </head>
 
 <body>
-<canvas id="playground"></canvas>
-<button id="start">start</button>
-<button id="next">next</button>
+<div id="examples"></div>
 
-<h4 id="location">座標: 0</h4>
-<h4 id="calculateCount">每禎計算次數: 0</h4>
-<h4 id="calculateTime">每禎計算時間: 0ms</h4>
+<div id="teamState">
+    <div id="teamA">50%</div>
+    <div id="teamB">50%</div>
+</div>
 
-<h4 id="count">0</h4>
+<div id="gamePage">
+    <canvas id="playground"></canvas>
+    <canvas id="miniMap"></canvas>
+
+    <button id="start">start</button>
+    <button id="next">next</button>
+
+    <div class="location">
+        <h4 id="location">座標: 0</h4>
+    </div>
+    <h4 id="calculateCount">for迴圈次數: 0</h4>
+    <h4 id="calculateTime">每禎計算時間: 0ms</h4>
+
+    <h4 id="count">0</h4>
+</div>
+
 </body>
 
 </html>

@@ -2,6 +2,8 @@ package com.java.game;
 
 import java.awt.*;
 import java.awt.image.BufferStrategy;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Game extends Canvas implements Runnable {
     public static int WIDTH = 900, HEIGHT = WIDTH / 12 * 9;
@@ -23,7 +25,7 @@ public class Game extends Canvas implements Runnable {
         HEIGHT = getHeight();
         System.out.println(getWidth() + "x" + getHeight());
 
-        handler.addObject(new GameCalculation(0, 0, ID.Chunk));
+//        handler.addObject(new GameCalculator(0, 0, ID.Chunk));
 
 //        //add an object
 //        handler.addObject(new Player(WIDTH / 2, HEIGHT / 2, ID.Player));
@@ -37,6 +39,12 @@ public class Game extends Canvas implements Runnable {
         thread = new Thread(this);
         thread.start();
         running = true;
+
+//        ExecutorService service = Executors.newFixedThreadPool(10);
+//
+//        int n = Runtime.getRuntime().availableProcessors();
+//        System.out.println(n);
+//        System.out.println(service.);
     }
 
     public synchronized void stop() {
@@ -51,7 +59,7 @@ public class Game extends Canvas implements Runnable {
     @Override
     public void run() {
         long lastTime = System.nanoTime();
-        double amountOfTicks = 100.0;
+        double amountOfTicks = 200.0;
         double ns = 1000000000 / amountOfTicks;
         double delta = 0;
         long timer = System.currentTimeMillis();

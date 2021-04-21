@@ -1,36 +1,38 @@
-package com.java.game;
+package com.java.server.game;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-import static com.java.game.GameCalculator.*;
+import static com.java.server.game.GameCalculatorNoGui.*;
 
-public class Chunk {
+public class ChunkNoGui {
+    private final GameCalculatorNoGui calculator;
+
     private final int locX;
     private final int locY;
-    public static int chunkWidth = 16;
-    public static int chunkHeight = 16;
+    public final int chunkWidth = 16;
+    public final int chunkHeight = 16;
     public int pixelSize = 5;
     public int gap = 1;
-    Color deadPixel = Color.black;
-    public int teamAID = 1;
-    Color alivePixelA = Color.cyan;
-    public int teamBID = 2;
-    Color alivePixelB = Color.white;
+    private final int teamAID;
+    private final int teamBID;
 
     //記錄整個chunk
     private final int[][] chunkMap = new int[chunkWidth][];
     //紀錄每個cell旁邊有幾個
     public int[][] cellData = new int[chunkWidth][];
     //舊的cell data
-    public List<int[]> oldCellData = new ArrayList<>();
+    public CopyOnWriteArrayList<int[]> oldCellData = new CopyOnWriteArrayList<>();
     //附近有東西的cell
-    public List<int[]> alivePixelList = new ArrayList<>();
+    public CopyOnWriteArrayList<int[]> alivePixelList = new CopyOnWriteArrayList<>();
     //本來是活的
-    public List<Object> beforeChange = null;
+    public CopyOnWriteArrayList<Object> beforeChange = null;
     //要更改的cell
-    private List<int[]> changeList = new ArrayList<>();
+    public List<int[]> changeList = new ArrayList<>();
+
+    //活的list
+    public List<String> aliveList = new ArrayList<>();
 
     int count = 0;
     boolean isAllZero = false;
@@ -39,9 +41,12 @@ public class Chunk {
     public int teamACount = 0;
     public int teamBCount = 0;
 
-    public Chunk(int locX, int locY) {
+    public ChunkNoGui(int locX, int locY, GameCalculatorNoGui calculator) {
+        this.calculator = calculator;
         this.locX = locX;
         this.locY = locY;
+        this.teamAID = calculator.teamAID;
+        this.teamBID = calculator.teamBID;
         for (int x = 0; x < chunkWidth; x++) {
             int[] yCache = new int[chunkHeight];
             int[] yDataCache = new int[chunkHeight];
@@ -59,8 +64,9 @@ public class Chunk {
 
     //user改變cells
     public void addCells(int[][] changeList, int teamID) {
-        final int chunkStartX = (int) (locX * (pixelSize * screenScale + gap) * chunkWidth);
-        final int chunkStartY = (int) (locY * (pixelSize * screenScale + gap) * chunkHeight);
+        final int pixSize = (int) (pixelSize * screenScale + gap);
+        final int chunkStartX = locX * pixSize * chunkWidth;
+        final int chunkStartY = locY * pixSize * chunkHeight;
         count = 0;
         for (int[] i : changeList) {
 //            //換顏色
@@ -78,12 +84,38 @@ public class Chunk {
 
             //告訴鄰居
             //x, y
-            if (chunkMap[i[0]][i[1]] > 0) {
+            final int team = this.chunkMap[i[0]][i[1]];
+            final int locInt = i[0] + i[1] * chunkWidth;
+            if (team > 0) {
+                //計算各自的數量
+                if (team == this.teamAID) {
+                    GameCalculatorNoGui.teamACount--;
+                    this.teamACount--;
+                } else if (team == this.teamBID) {
+                    GameCalculatorNoGui.teamBCount--;
+                    this.teamBCount--;
+                }
+                this.chunkAliveCount--;
+
                 chunkMap[i[0]][i[1]] = 0;
                 calculateCellData(i[0], i[1], 0, false);
+                //紀錄活細胞座標
+                aliveList.remove(locInt + "," + teamID);
             } else {
+                //計算各自的數量
+                if (teamID == this.teamAID) {
+                    GameCalculatorNoGui.teamACount++;
+                    this.teamACount++;
+                } else if (teamID == this.teamBID) {
+                    GameCalculatorNoGui.teamBCount++;
+                    this.teamBCount++;
+                }
+                this.chunkAliveCount++;
+
                 chunkMap[i[0]][i[1]] = teamID;
                 calculateCellData(i[0], i[1], 1, false);
+                //紀錄活細胞座標
+                aliveList.add(locInt + "," + teamID);
             }
 
             if (!isLocInAliveList(i[0], i[1])) {
@@ -94,8 +126,8 @@ public class Chunk {
 
     //計算所有細胞死活
     public int calculateChunk() {
-        changeList = new ArrayList<>();
-        beforeChange = new ArrayList<>();
+        beforeChange = new CopyOnWriteArrayList<>();
+        changeList.clear();
         boolean isAllZero = true;
 
         for (int i = 0; i < alivePixelList.size(); i++) {
@@ -104,8 +136,19 @@ public class Chunk {
             //附近的細胞數
             final int count = cellData[aliveX][aliveY];
 
+            //現在細胞的狀態
+            final int team = chunkMap[aliveX][aliveY];
+
+            //地圖邊緣
+            if (this.locY > maxChunkY || this.locX > maxChunkX || this.locX < minChunkX || this.locY < minChunkY) {
+                //活的細胞全部殺
+                if (team > 0)
+                    changeList.add(new int[]{aliveX, aliveY});
+                continue;
+            }
+
             //現在是活的細胞
-            if (chunkMap[aliveX][aliveY] > 0) {
+            if (team > 0) {
                 // 生命數量稀少或過多要死亡
                 if (count < 2 || count > 3) {
                     changeList.add(new int[]{aliveX, aliveY});
@@ -125,8 +168,7 @@ public class Chunk {
                 }
             }
 
-            // console.log(x,y,count)
-            if (count == 0 && chunkMap[aliveX][aliveY] == 0) {
+            if (count == 0 && team == 0) {
                 alivePixelList.remove(i);
                 i--;
             } else
@@ -138,20 +180,48 @@ public class Chunk {
 
         //更新地圖
         for (int[] i : changeList) {
+            final int team = chunkMap[i[0]][i[1]];
+            final int locInt = i[0] + i[1] * chunkWidth;
             //x, y
-            if (chunkMap[i[0]][i[1]] > 0) {
+            if (team > 0) {
+                //計算各自的數量
+                if (team == this.teamAID) {
+                    GameCalculatorNoGui.teamACount--;
+                    this.teamACount--;
+                } else if (team == this.teamBID) {
+                    GameCalculatorNoGui.teamBCount--;
+                    this.teamBCount--;
+                }
+                this.chunkAliveCount--;
+
                 chunkMap[i[0]][i[1]] = 0;
                 calculateCellData(i[0], i[1], 0, false);
+                //紀錄活細胞座標
+                aliveList.remove(locInt + "," + team);
             } else {
-                chunkMap[i[0]][i[1]] = calculateCellData(i[0], i[1], 1, true);
+                final int newTeamID = calculateCellData(i[0], i[1], 1, true);
+                chunkMap[i[0]][i[1]] = newTeamID;
+
+                //計算各自的數量
+                if (team == this.teamAID) {
+                    GameCalculatorNoGui.teamACount++;
+                    this.teamACount++;
+                } else if (team == this.teamBID) {
+                    GameCalculatorNoGui.teamBCount++;
+                    this.teamBCount++;
+                }
+                this.chunkAliveCount++;
+
+                //紀錄活細胞座標
+                aliveList.add(locInt + "," + newTeamID);
             }
         }
 
         //unload chunk如果沒用
         if (isAllZero)
             this.isAllZero = true;
-        if (this.isAllZero && isAllZero && !needChangeChunk.contains(locX + "," + locY))
-            unloadChunk(locX, locY);
+        if (this.isAllZero && isAllZero && !calculator.needChangeChunk.contains(locX + "," + locY))
+            calculator.unloadChunk(locX, locY);
 
         // console.log(this.count);
         int cache = count;
@@ -227,17 +297,11 @@ public class Chunk {
                     y -= chunkHeight;
 
                 //load chunk
-                Chunk nextChunk;
+                ChunkNoGui nextChunk = calculator.chunks.get(cx + "," + cy);
 
-                if (!chunks.containsKey(cx + "," + cy)) {
-                    synchronized (GameCalculator.class) {
-                        nextChunk = loadChunk(cx, cy);
-                    }
-                } else
-                    nextChunk = chunks.get(cx + "," + cy);
-
-
-//                System.out.println(cx + "," + cy);
+                if (nextChunk == null) {
+                    nextChunk = calculator.loadChunk(cx, cy);
+                }
 
                 //活的
                 if (state > 0)
@@ -251,8 +315,8 @@ public class Chunk {
                 }
 
                 //需要之後處理
-                if (!needChangeChunk.contains(cx + "," + cy)) {
-                    needChangeChunk.add(cx + "," + cy);
+                if (!calculator.needChangeChunk.contains(cx + "," + cy)) {
+                    calculator.needChangeChunk.add(cx + "," + cy);
                 }
 
 
@@ -282,8 +346,6 @@ public class Chunk {
         }
 
         if (summon) {
-            if (teamA + teamB > 3)
-                System.out.println("error");
             if (teamA > teamB)
                 return teamAID;
             else
@@ -292,77 +354,11 @@ public class Chunk {
         return -1;
     }
 
-    //更新整個chunk
-    public void drawChunk(Graphics canvas) {
-        final int pixSize = (int) (pixelSize * screenScale + gap);
-        final int chunkStartX = locX * pixSize * chunkWidth + mapX;
-        final int chunkStartY = locY * pixSize * chunkHeight + mapY;
-
-        for (int[] i : alivePixelList) {
-            int team = chunkMap[i[0]][i[1]];
-            if (team == 0) {
-                canvas.setColor(deadPixel);
-            } else {
-                if (team == 1)
-                    canvas.setColor(alivePixelA);
-                else if (team == 2)
-                    canvas.setColor(alivePixelB);
-            }
-
-            //fill square
-            canvas.fillRect(chunkStartX + pixSize * i[0],
-                    chunkStartY + pixSize * i[1],
-                    pixSize, pixSize);
-        }
-    }
-
-    //更新改變的cells
-    public void drawChangeCells(Graphics canvas) {
-        final int pixSize = (int) (pixelSize * screenScale + gap);
-        final int chunkStartX = locX * pixSize * chunkWidth;
-        final int chunkStartY = locY * pixSize * chunkHeight;
-        for (int[] i : changeList) {
-            int team = this.chunkMap[i[0]][i[1]];
-            if (team == 0) {
-                canvas.setColor(this.deadPixel);
-            } else {
-                if (team == 1)
-                    canvas.setColor(this.alivePixelA);
-                else if (team == 2)
-                    canvas.setColor(this.alivePixelB);
-            }
-
-            canvas.fillRect(chunkStartX + pixSize * i[0],
-                    chunkStartY + pixSize * i[1],
-                    pixSize, pixSize);
-        }
-    }
-
-    public void printCellData() {
-        for (int y = 0; y < chunkHeight; y++) {
-            String str = "";
-            for (int x = 0; x < chunkWidth; x++) {
-                str += cellData[x][y] + ",";
-            }
-            System.out.println(str);
-        }
-    }
-
-    public void printMapData() {
-        for (int y = 0; y < chunkHeight; y++) {
-            String str = "";
-            for (int x = 0; x < chunkWidth; x++) {
-                str += chunkMap[x][y] + ",";
-            }
-            System.out.println(str);
-        }
-    }
-
     public boolean isLocInAliveList(int x, int y) {
         if (alivePixelList == null)
             return false;
 
-        for (final int[] i : alivePixelList) {
+        for (int[] i : alivePixelList) {
             if (i[0] == x && i[1] == y)
                 return true;
 
@@ -377,15 +373,22 @@ public class Chunk {
             return -1;
 
         final String kernel = x + "," + y;
-        for (int i = 0; i < beforeChange.size(); i += 2) {
-            synchronized (this) {
-                if (kernel.equals(beforeChange.get(i)))
-                    return (int) beforeChange.get(i + 1);
+        for (int i = 0; i < beforeChange.size() - 1; i += 2) {
+            if (kernel.equals(beforeChange.get(i)))
+                return (int) beforeChange.get(i + 1);
 
-                //TODO this is for debug
-                count++;
-            }
+            //TODO this is for debug
+            count++;
         }
         return -1;
+    }
+
+    public int getPixelValue(int x, int y) {
+        return chunkMap[x][y];
+    }
+
+    @Override
+    public String toString() {
+        return aliveList.size() + "";
     }
 }

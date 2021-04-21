@@ -1,7 +1,7 @@
 package com.java.game;
 
 public class CellData {
-    int[][] cellData00 = new int[][]{
+    public int[][] cellData00 = new int[][]{
             {12, 2},
             {13, 2},
             {14, 2},
@@ -73,7 +73,7 @@ public class CellData {
             {15, 15},
     };
 
-    int[][] cellData01 = new int[][]{
+    public int[][] cellData01 = new int[][]{
             {10, 0},
             {11, 0},
             {13, 0},
@@ -122,7 +122,7 @@ public class CellData {
             {8, 10}
     };
 
-    int[][] cellData10 = new int[][]{
+    public int[][] cellData10 = new int[][]{
             {2, 0},
             {1, 1},
             {2, 1},
@@ -176,7 +176,7 @@ public class CellData {
             {3, 15}
     };
 
-    int[][] cellData11 = new int[][]{
+    public int[][] cellData11 = new int[][]{
             {0, 0},
             {3, 0},
             {5, 0},

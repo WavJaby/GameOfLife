@@ -22,13 +22,8 @@ public class Handler {
         }
     }
 
-    public void objectAdded(GameObject object){
-        object.objectAdded();
-    }
-
     public void addObject(GameObject object) {
         this.objects.add(object);
-        objectAdded(object);
     }
 
     public void removeObject(GameObject object) {
