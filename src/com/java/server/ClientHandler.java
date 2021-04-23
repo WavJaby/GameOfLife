@@ -9,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,9 +28,6 @@ public class ClientHandler implements Runnable {
 
     boolean running = true;
 
-    //等待handshake
-    private final CountDownLatch countDownLatch = new CountDownLatch(1);
-
     ClientHandler(Socket socket, String id) {
         this.socket = socket;
         this.id = id;
@@ -45,6 +43,10 @@ public class ClientHandler implements Runnable {
 //        new Thread(this).start();
     }
 
+    /**
+     * Data receive
+     * Websocket
+     */
     @Override
     public void run() {
         //握手
@@ -56,28 +58,45 @@ public class ClientHandler implements Runnable {
         }
         System.out.println("[" + TAG + "]handshake done");
 
-        int buffLength = 1024;
         try {
             while (running) {
-                byte[] packetData = new byte[buffLength];
-                int length = in.read(packetData);
+                byte[] headerData = new byte[2];
+                in.read(headerData);
                 long timeStart = System.nanoTime();
 
-                while (length == buffLength) {
-                    length = Math.min(in.available(), buffLength);
-                    int lastLength = packetData.length;
-                    packetData = arrayExpand(packetData, length);
-                    length = in.read(packetData, lastLength, length);
+                int fin = (headerData[0] >> 7) & 0x1;
+                int opcode = (headerData[0]) & 0x0f;
+                boolean mask = ((headerData[1] >> 7) & 0x1) > 0;
+                int payloadLength = headerData[1] & 0x7F;
+                long finalPayloadLength = payloadLength;
+                //如果長度過大，讀取附加長度
+                if (payloadLength > 125) {
+                    byte[] extendedLength;
+                    if (payloadLength == 126) {
+                        //126
+                        extendedLength = new byte[2];
+                    } else {
+                        //127
+                        extendedLength = new byte[8];
+                    }
+                    in.read(extendedLength);
+
+                    finalPayloadLength = byteArrayToLong(extendedLength, extendedLength.length, 0);
                 }
 
-                //解讀
-                byte[] data = unMaskData(packetData);
-                //連線關閉
-                if (data == null)
-                    break;
+                //讀資料
+                byte[] packetData = readData(mask, finalPayloadLength, in);
 
-                String message = new String(data, 1, data.length - 1);
-                gameControl.ReceiveData((char) data[0], message, id, this);
+                //收到關閉
+                if (opcode == Opcode.connectionClose) {
+                    running = false;
+                    System.out.println(new String(packetData));
+                } else {
+                    //收到資料
+                    String message = new String(packetData, 1, packetData.length - 1);
+                    gameControl.ReceiveData((char) packetData[0], message, id, this);
+                }
+
 
                 long timeEnd = System.nanoTime();
                 System.out.println("use:" + (double) (timeEnd - timeStart) / 1000000 + "ms");
@@ -86,33 +105,100 @@ public class ClientHandler implements Runnable {
 
         } catch (IOException e) {
             closeSocket();
+            e.printStackTrace();
             return;
         }
         closeSocket();
     }
 
+    private byte[] readData(boolean mask, long payloadLength, InputStream in) throws IOException {
+        byte[] payloadData = new byte[(int) payloadLength];
+        byte[] maskData = null;
+        //有mask的話讀取
+        if (mask) {
+            maskData = new byte[4];
+            in.read(maskData);
+        }
+        in.read(payloadData);
+        //有mask的解開
+        if (mask) {
+            //unmasking
+            for (int i = 0; i < payloadLength; i++) {
+                payloadData[i] = (byte) ((int) payloadData[i] ^ (int) maskData[i % 4]);
+            }
+        }
+
+        return payloadData;
+    }
+
+    public void closeSocket() {
+        running = false;
+        if (gameControl != null)
+            gameControl.ClientDisconnect(id);
+        if (clientEvent != null)
+            clientEvent.OnClose(id);
+
+        if (!socket.isClosed())
+            try {
+                socket.close();
+                in.close();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        System.out.println("[" + TAG + "]Client close");
+    }
+
+    /**
+     * Data Send
+     */
+    private CountDownLatch dataSend = new CountDownLatch(0);
+
     public void sendData(String message) {
-        //等待handshake
         try {
-            countDownLatch.await();
+            dataSend.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        sendTextFrameData(message.getBytes(StandardCharsets.UTF_8));
+        splitData(message.getBytes(StandardCharsets.UTF_8));
     }
 
-    public void sendData(byte[] message) {
-        //等待handshake
+    private final int maxPayloadLength = 65535;
+
+    private void splitData(byte[] message) {
+        //設定這個客戶正在傳輸
+        dataSend = new CountDownLatch(1);
         try {
-            countDownLatch.await();
+            //等待handshake
+            handshake.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        sendTextFrameData(message);
+
+//        System.out.println(message.length);
+
+        int count = 0;
+        while ((message.length - count * maxPayloadLength) > maxPayloadLength) {
+            byte[] cache = new byte[maxPayloadLength];
+            System.arraycopy(message, count * maxPayloadLength, cache, 0, maxPayloadLength);
+            if (count == 0)
+                sendTextFrameData(cache, 0, Opcode.textFrame);
+            else
+                sendTextFrameData(cache, 0, Opcode.continuationFrame);
+            count++;
+        }
+        if (count > 0) {
+            byte[] cache = new byte[(message.length - count * maxPayloadLength)];
+            System.arraycopy(message, count * maxPayloadLength, cache, 0, cache.length);
+            sendTextFrameData(cache, 1, Opcode.continuationFrame);
+        } else
+            sendTextFrameData(message, 1, Opcode.textFrame);
+
+        //傳輸結束
+        dataSend.countDown();
     }
 
-    private void sendTextFrameData(byte[] payloadInput) {
-        int fin = 1, opcode = Opcode.textFrame, mask = 0;
+    private void sendTextFrameData(byte[] payloadInput, int fin, int opcode) {
+        int mask = 0;
         int dataLength = payloadInput.length;
         int payloadLength;
         byte[] extendedLength = null;
@@ -132,63 +218,25 @@ public class ClientHandler implements Runnable {
         frameHead[0] = (byte) ((fin << 7) + opcode);
         frameHead[1] = (byte) ((mask << 7) + payloadLength);
 
-
         try {
-            out.write(frameHead);
-            if (extendedLength != null) {
-                out.write(extendedLength);
+            if (running) {
+                out.write(frameHead);
+                if (extendedLength != null) {
+                    out.write(extendedLength);
+                }
+                out.write(payloadInput);
             }
-            out.write(payloadInput);
 
         } catch (IOException e) {
+            running = false;
             e.printStackTrace();
         }
     }
 
-    //    private boolean dataReadDone;
-//    private byte[] payloadData;
-    private byte[] unMaskData(byte[] inData) throws IOException {
-//        if (dataReadDone)
-//            payloadData = new byte[inData.length];
-//        dataReadDone = false;
-
-        int fin = (inData[0] >> 7) & 0x1;
-        int opcode = ((char) inData[0]) & 0x0f;
-        //如果連接關閉
-        if (opcode == Opcode.connectionClose) {
-            return null;
-        }
-
-
-        //資料大小
-        int packetLength = inData[1] & 0x7f;
-        long payloadLength = packetLength;
-        int payloadStartLoc = 2;
-        if (packetLength == 126) {
-            payloadStartLoc += 2;
-            payloadLength = byteArrayToLong(inData, 2, 2);
-        } else if (packetLength == 127) {
-            payloadStartLoc += 8;
-            payloadLength = byteArrayToLong(inData, 8, 2);
-        }
-
-//        System.out.println(payloadLength);
-
-        //read mask byte
-        byte[] readMask = new byte[4];
-        readMask[0] = inData[payloadStartLoc++];
-        readMask[1] = inData[payloadStartLoc++];
-        readMask[2] = inData[payloadStartLoc++];
-        readMask[3] = inData[payloadStartLoc++];
-
-        //payload data
-        byte[] payload = new byte[(int) payloadLength];
-        //unmasking
-        for (int i = 0; i < payloadLength; i++) {
-            payload[i] = (byte) ((int) inData[payloadStartLoc + i] ^ (int) readMask[i % 4]);
-        }
-        return payload;
-    }
+    /**
+     * Handshake
+     */
+    private final CountDownLatch handshake = new CountDownLatch(1);
 
     public boolean doHandShake() {
         Scanner s = new Scanner(in, "UTF-8");
@@ -213,7 +261,7 @@ public class ClientHandler implements Runnable {
                 out.write(response, 0, response.length);
 
                 //handshake結束
-                countDownLatch.countDown();
+                handshake.countDown();
                 return true;
             } else
                 return false;
@@ -223,6 +271,9 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Data process
+     */
     public static byte[] arrayExpand(byte[] original, int addArraySize) {
         int newLength = original.length + addArraySize;
         int preserveLength = Math.min(original.length, newLength);
@@ -270,7 +321,7 @@ public class ClientHandler implements Runnable {
         return null;
     }
 
-    private static String printByte(byte[] bytes) {
+    private static String getByteArray(byte[] bytes) {
         int i = 0;
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("[");
@@ -287,9 +338,8 @@ public class ClientHandler implements Runnable {
         return String.format("%8s", Integer.toBinaryString(byteIn & 0xFF)).replace(' ', '0');
     }
 
-    private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
-
     public static String bytesToHex(byte[] bytes) {
+        final char[] hexArray = "0123456789ABCDEF".toCharArray();
         char[] hexChars = new char[bytes.length * 3 - 1];
         for (int j = 0; j < bytes.length; j++) {
             int v = bytes[j] & 0xFF;
@@ -301,25 +351,9 @@ public class ClientHandler implements Runnable {
         return new String(hexChars);
     }
 
-
-    public void closeSocket() {
-        running = false;
-        if (gameControl != null)
-            gameControl.ClientDisconnect(id);
-        if (clientEvent != null)
-            clientEvent.OnClose(id);
-
-        if (!socket.isClosed())
-            try {
-                socket.close();
-                in.close();
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            }
-        System.out.println("[" + TAG + "]Client close");
-    }
-
-
+    /**
+     * Event
+     */
     private ClientEvent clientEvent;
 
     public void addEventListener(ClientEvent clientEvent) {

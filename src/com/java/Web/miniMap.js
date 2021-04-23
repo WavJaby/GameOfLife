@@ -75,8 +75,8 @@ function updateMiniMap(need) {
 let mapScale = 1;
 
 function refreshMiniMap() {
-    chunkWidthSize = cWidth * (((cPixSize * screenScale + cGap) * 10 | 0) / 10);
-    chunkHeightSize = cHeight * (((cPixSize * screenScale + cGap) * 10 | 0) / 10);
+    chunkWidthSize = cWidth * realPixelSize;
+    chunkHeightSize = cHeight * realPixelSize;
 
     let width = miniMapWidth / mapScale;
     let height = miniMapHeight / mapScale;
@@ -107,7 +107,6 @@ function refreshMiniMap() {
                 } else {
                     continue;
                 }
-
 
                 miniMapCanvas.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
                 miniMapCanvas.fillRect(x * mapScale, y * mapScale, mapScale, mapScale);

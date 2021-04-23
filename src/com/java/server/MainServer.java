@@ -8,6 +8,7 @@ import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -19,7 +20,7 @@ public class MainServer implements ClientHandler.ClientEvent, Runnable {
     public static boolean mainStart;
 
     //客戶端ID
-    public static final Map<String, ClientHandler> clients = new HashMap<>();
+    public static final Map<String, ClientHandler> clients = new ConcurrentHashMap<>();
 
     public static int clientCount = 0;
 
@@ -103,11 +104,11 @@ public class MainServer implements ClientHandler.ClientEvent, Runnable {
         }
     }
 
-    public static void broadcastMessage(byte[] message) {
-        for (ClientHandler i : clients.values()) {
-            i.sendData(message);
-        }
-    }
+//    public static void broadcastMessage(byte[] message) {
+//        for (ClientHandler i : clients.values()) {
+//            i.sendData(message);
+//        }
+//    }
 
     @Override
     public void OnClose(String id) {

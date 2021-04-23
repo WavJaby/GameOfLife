@@ -3,9 +3,11 @@ package com.java.server;
 import com.java.server.game.ChunkNoGui;
 import com.java.server.game.GameCalculatorNoGui;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class GameControl implements Runnable, ClientHandler.PlayerEvent {
     //人數限制
@@ -15,7 +17,6 @@ public class GameControl implements Runnable, ClientHandler.PlayerEvent {
 
     //遊戲
     private GameCalculatorNoGui game;
-    private CountDownLatch countDownLatch = new CountDownLatch(1);
 
     //遊戲狀態
     public boolean gameStart;
@@ -46,15 +47,27 @@ public class GameControl implements Runnable, ClientHandler.PlayerEvent {
             //計算chunk更新
             if (playerCount > 0 && (System.nanoTime() - gameTickTimer) > tickTime) {
                 gameCalculateWait = new CountDownLatch(1);
+                //開始計時
                 gameTickTimer = System.nanoTime();
+                //計算地圖
                 calculateCount = game.calculateAllChunks();
+                //結束計時
                 debugPrintTimer += System.nanoTime() - gameTickTimer;
+
                 //傳送更新的chunk
                 sendChunkUpdateToPlayer();
+                //繼續資料傳送
                 gameCalculateWait.countDown();
-                //計算花費時間
 
                 debugPrintCount++;
+
+                if (game.worldTime == 300) {
+                    game.addCells();
+                }
+
+                if (game.worldTime == 600) {
+                    gameStart = false;
+                }
             }
 
             //debug
@@ -82,12 +95,12 @@ public class GameControl implements Runnable, ClientHandler.PlayerEvent {
             JsonBuilder viewArea = new JsonBuilder();
 
             Map<String, Object> thisPlayerData = playerData.get(i.getKey());
-            if(thisPlayerData == null)
+            if (thisPlayerData == null)
                 return;
 
             //更新玩家視野中的chunk
             String[] updateChunkLoc = ((String) thisPlayerData.get("viewArea")).split(",");
-            getViewAreaUpdate(updateChunkLoc, (int)thisPlayerData.get("worldTime"), viewArea);
+            getViewAreaUpdate(updateChunkLoc, (int) thisPlayerData.get("worldTime"), viewArea);
             thisPlayerData.put("worldTime", game.worldTime);
 
 
@@ -95,26 +108,9 @@ public class GameControl implements Runnable, ClientHandler.PlayerEvent {
             builder.append("viewArea", viewArea);
             sendData(builder, "chunkUpdate", i.getValue());
         });
-
-//        for (Map.Entry<String, ClientHandler> i : MainServer.clients.entrySet()) {
-//            JsonBuilder viewArea = new JsonBuilder();
-//
-//            Map<String, Object> thisPlayerData = playerData.get(i.getKey());
-//            if(thisPlayerData == null)
-//                continue;
-//
-//            //更新玩家視野中的chunk
-//            String[] updateChunkLoc = ((String) thisPlayerData.get("viewArea")).split(",");
-//            getViewAreaUpdate(updateChunkLoc, (int)thisPlayerData.get("worldTime"), viewArea);
-//            thisPlayerData.put("worldTime", game.worldTime);
-//
-//
-//            JsonBuilder builder = new JsonBuilder();
-//            builder.append("viewArea", viewArea);
-//            sendData(builder, "chunkUpdate", i.getValue());
-//        }
     }
 
+    //Data process
     private final String splitDataStr = "\r\n\r\n";
     private final String splitKeyStr = "\r\n";
 
@@ -167,7 +163,6 @@ public class GameControl implements Runnable, ClientHandler.PlayerEvent {
         thisPlayerData.put("viewArea", "");
         thisPlayerData.put("worldTime", game.worldTime);
         playerData.put(clientID, thisPlayerData);
-        System.out.println(playerData);
 
         return true;
     }
@@ -236,9 +231,13 @@ public class GameControl implements Runnable, ClientHandler.PlayerEvent {
         if (dataLabel.containsKey("fail")) {
             return;
         }
+        System.out.println("rrrrrr");
 
         //取得需要載入的chunk
         String[] loadChunkLoc = ((String) dataLabel.get("loadList")).split(";");
+
+//        System.out.println(Arrays.toString(loadChunkLoc));
+        System.out.println("ssssss");
 
         //如果正在計算要等待
         try {
@@ -246,6 +245,8 @@ public class GameControl implements Runnable, ClientHandler.PlayerEvent {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        System.out.println(Thread.currentThread().getName());
+
 
         //傳出資料
         JsonBuilder loadChunk = new JsonBuilder();
@@ -254,15 +255,16 @@ public class GameControl implements Runnable, ClientHandler.PlayerEvent {
             ChunkNoGui chunk;
             //有chunk有東西
             if ((chunk = game.chunks.get(i)) != null &&
-                    chunk.aliveList.size() > 0) {
-                loadChunk.appendArray(i, chunk.aliveList.toString()
-                        .replaceFirst("\\[", "[[")
-                        .replaceFirst("]", "]]")
-                        .replace(", ", "],["));
+                    (chunk.aliveList[0].size() > 0 || chunk.aliveList[1].size() > 0)) {
+                loadChunk.appendArray(i, Arrays.toString(chunk.aliveList));
+            } else {
+                loadChunk.append(i, 0);
             }
         }
+        System.out.println("uuuuuu");
 
         Map<String, Object> thisPlayerData = playerData.get(clientID);
+
 
         //更新玩家視野中的chunk
         String[] updateChunkLoc = ((String) thisPlayerData.get("viewArea")).split(",");
@@ -319,7 +321,6 @@ public class GameControl implements Runnable, ClientHandler.PlayerEvent {
         jsonBuilder.append("data", data);
 
         String result = jsonBuilder.getResult();
-//        System.out.println(result);
         client.sendData((char) GameOpcode.data + result);
     }
 
@@ -333,6 +334,7 @@ public class GameControl implements Runnable, ClientHandler.PlayerEvent {
     @Override
     public void ReceiveData(char opcode, String data, String clientID, ClientHandler client) {
         System.out.println();
+        System.out.println("##############");
         switch (opcode) {
             case GameOpcode.login:
                 System.out.println("Player login");

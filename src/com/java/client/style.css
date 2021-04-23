@@ -88,15 +88,9 @@ html, body {
 
 /*UI*/
 /*button*/
-#start {
+#pause {
     position: fixed;
     left: 10px;
-    top: 15px;
-}
-
-#next {
-    position: fixed;
-    left: 70px;
     top: 15px;
 }
 

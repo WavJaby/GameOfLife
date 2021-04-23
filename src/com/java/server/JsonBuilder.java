@@ -52,11 +52,27 @@ public class JsonBuilder {
         hasValue = true;
     }
 
+    boolean resultGet = false;
+
     public String getResult() {
+        if (!resultGet) {
+            builder.append("}");
+            resultGet = true;
+        }
+        return builder.toString();
+    }
+
+    public String getResult(boolean clear) {
         builder.append("}");
         String result = builder.toString();
         builder.setLength(1);
+        resultGet = false;
         return result;
+    }
+
+    public void clear() {
+        builder.setLength(1);
+        resultGet = false;
     }
 
     private String addQuotation(String value) {

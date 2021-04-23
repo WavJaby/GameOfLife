@@ -1,11 +1,6 @@
-const teamAID = 1;
-const teamBID = 2;
-
 class Chunk {
     chunkWidth = 16;
     chunkHeight = 16;
-    pixelSize = 5;
-    gap = 1;
     deadPixel = 'rgb(10, 10, 10)';
     alivePixelA = 'rgb(0, 200, 200)';
     alivePixelB = 'rgb(200, 200, 200)';
@@ -14,13 +9,13 @@ class Chunk {
     //活的
     alivePixelList = [];
 
-    constructor(locX, locY, cw, ch, pSize, gap, tac, tbc, deadC) {
+    chunkTime = 0;
+
+    constructor(locX, locY, cw, ch, tac, tbc, deadC) {
         this.locX = locX;
         this.locY = locY;
         this.chunkWidth = cw;
         this.chunkHeight = ch;
-        this.pixelSize = pSize;
-        this.gap = gap;
         this.teamACount = tac;
         this.teamBCount = tbc;
         this.deadPixel = deadC;
@@ -38,37 +33,35 @@ class Chunk {
     }
 
     clear(canvas) {
-        const pixSize = ((this.pixelSize * screenScale + this.gap) * 10 | 0) / 10;
-        let chunkStartX = this.locX * pixSize * this.chunkWidth;
-        let chunkStartY = this.locY * pixSize * this.chunkHeight;
+        let chunkStartX = this.locX * realPixelSize * this.chunkWidth;
+        let chunkStartY = this.locY * realPixelSize * this.chunkHeight;
 
-        let thisPixSize = pixSize;
+        let thisPixSize = realPixelSize;
         if (screenScale > drawLineScreenScale) {
-            chunkStartX += this.gap / 2;
-            chunkStartY += this.gap / 2;
-            thisPixSize -= this.gap;
+            chunkStartX += cGap / 2;
+            chunkStartY += cGap / 2;
+            thisPixSize -= cGap;
         }
 
         canvas.fillStyle = this.deadPixel;
         for (const i of this.alivePixelList) {
             this.chunkMap[i[0]][i[1]] = 0;
-            canvas.fillRect(chunkStartX + pixSize * i[0],
-                chunkStartY + pixSize * i[1],
+            canvas.fillRect(chunkStartX + realPixelSize * i[0],
+                chunkStartY + realPixelSize * i[1],
                 thisPixSize, thisPixSize);
         }
         this.alivePixelList = [];
     }
 
     addCells(addList, canvas, user) {
-        const pixSize = ((this.pixelSize * screenScale + this.gap) * 10 | 0) / 10;
-        let chunkStartX = this.locX * pixSize * this.chunkWidth;
-        let chunkStartY = this.locY * pixSize * this.chunkHeight;
+        let chunkStartX = this.locX * realPixelSize * this.chunkWidth;
+        let chunkStartY = this.locY * realPixelSize * this.chunkHeight;
 
-        let thisPixSize = pixSize;
+        let thisPixSize = realPixelSize;
         if (screenScale > drawLineScreenScale) {
-            chunkStartX += this.gap / 2;
-            chunkStartY += this.gap / 2;
-            thisPixSize -= this.gap;
+            chunkStartX += cGap / 2;
+            chunkStartY += cGap / 2;
+            thisPixSize -= cGap;
         }
 
         this.count = 0;
@@ -80,23 +73,22 @@ class Chunk {
             else if (user === teamBID)
                 canvas.fillStyle = this.alivePixelB;
 
-            canvas.fillRect(chunkStartX + pixSize * i[0],
-                chunkStartY + pixSize * i[1],
+            canvas.fillRect(chunkStartX + realPixelSize * i[0],
+                chunkStartY + realPixelSize * i[1],
                 thisPixSize, thisPixSize);
         }
     }
 
     //user改變cells
     updateCells(changeList, canvas) {
-        const pixSize = ((this.pixelSize * screenScale + this.gap) * 10 | 0) / 10;
-        let chunkStartX = this.locX * pixSize * this.chunkWidth;
-        let chunkStartY = this.locY * pixSize * this.chunkHeight;
+        let chunkStartX = this.locX * realPixelSize * this.chunkWidth;
+        let chunkStartY = this.locY * realPixelSize * this.chunkHeight;
 
-        let thisPixSize = pixSize;
+        let thisPixSize = realPixelSize;
         if (screenScale > drawLineScreenScale) {
-            chunkStartX += this.gap / 2;
-            chunkStartY += this.gap / 2;
-            thisPixSize -= this.gap;
+            chunkStartX += cGap / 2;
+            chunkStartY += cGap / 2;
+            thisPixSize -= cGap;
         }
 
         this.count = 0;
@@ -111,17 +103,16 @@ class Chunk {
             else
                 canvas.fillStyle = this.deadPixel;
 
-            canvas.fillRect(chunkStartX + pixSize * i[0],
-                chunkStartY + pixSize * i[1],
+            canvas.fillRect(chunkStartX + realPixelSize * i[0],
+                chunkStartY + realPixelSize * i[1],
                 thisPixSize, thisPixSize);
         }
     }
 
     //更新整個chunk
     drawChunk(canvas) {
-        const pixSize = ((this.pixelSize * screenScale + this.gap) * 10 | 0) / 10;
-        let chunkStartX = this.locX * pixSize * this.chunkWidth;
-        let chunkStartY = this.locY * pixSize * this.chunkHeight;
+        let chunkStartX = this.locX * realPixelSize * this.chunkWidth;
+        let chunkStartY = this.locY * realPixelSize * this.chunkHeight;
 
         for (const i of this.alivePixelList) {
             const team = this.chunkMap[i[0]][i[1]];
@@ -135,9 +126,9 @@ class Chunk {
             }
 
             //fill square
-            canvas.fillRect(chunkStartX + pixSize * i[0],
-                chunkStartY + pixSize * i[1],
-                pixSize, pixSize);
+            canvas.fillRect(chunkStartX + realPixelSize * i[0],
+                chunkStartY + realPixelSize * i[1],
+                realPixelSize, realPixelSize);
         }
     }
 
@@ -146,15 +137,14 @@ class Chunk {
         if (this.changeList.length === 0)
             return;
 
-        const pixSize = ((this.pixelSize * screenScale + this.gap) * 10 | 0) / 10;
-        let chunkStartX = this.locX * pixSize * this.chunkWidth;
-        let chunkStartY = this.locY * pixSize * this.chunkHeight;
+        let chunkStartX = this.locX * realPixelSize * this.chunkWidth;
+        let chunkStartY = this.locY * realPixelSize * this.chunkHeight;
 
-        let thisPixSize = pixSize;
+        let thisPixSize = realPixelSize;
         if (screenScale > drawLineScreenScale) {
-            chunkStartX += this.gap / 2;
-            chunkStartY += this.gap / 2;
-            thisPixSize -= this.gap;
+            chunkStartX += cGap / 2;
+            chunkStartY += cGap / 2;
+            thisPixSize -= cGap;
         }
 
 
@@ -168,8 +158,8 @@ class Chunk {
                 else if (team === 2)
                     canvas.fillStyle = this.alivePixelB;
             }
-            canvas.fillRect(chunkStartX + pixSize * i[0],
-                chunkStartY + pixSize * i[1],
+            canvas.fillRect(chunkStartX + realPixelSize * i[0],
+                chunkStartY + realPixelSize * i[1],
                 thisPixSize, thisPixSize);
         }
     }
@@ -179,7 +169,7 @@ class Chunk {
         for (let y = 0; y < this.chunkHeight; y++) {
             let str = '';
             for (let x = 0; x < this.chunkWidth; x++) {
-                str += this.chunkMap[x][y] + ",";
+                str += this.chunkMap[x][y] + ',';
             }
             console.log(str);
         }

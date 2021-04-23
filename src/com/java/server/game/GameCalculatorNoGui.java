@@ -3,12 +3,14 @@ package com.java.server.game;
 import com.java.game.CellData;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class GameCalculatorNoGui {
     public static float screenScale = 0.3f;
     public Map<String, ChunkNoGui> chunks = new ConcurrentHashMap<>();
-    public CopyOnWriteArrayList<String> needChangeChunk = new CopyOnWriteArrayList<>();
+    public List<String> needChangeChunk = new ArrayList<>();
 
     //world
     public int worldTime = 0;
@@ -16,8 +18,6 @@ public class GameCalculatorNoGui {
     //chunk info
     public int cWidth;
     public int cHeight;
-    public int cPixSize;
-    int cGap;
 
     //team
     public final int teamAID = 1;
@@ -39,8 +39,6 @@ public class GameCalculatorNoGui {
         final ChunkNoGui homeChunk = new ChunkNoGui(0, 0, this);
         cWidth = homeChunk.chunkWidth;
         cHeight = homeChunk.chunkHeight;
-        cPixSize = homeChunk.pixelSize;
-        cGap = homeChunk.gap;
         chunks.put("0,0", homeChunk);
 
 //        homeChunk.addCells(new int[][]{
@@ -69,96 +67,25 @@ public class GameCalculatorNoGui {
         calculateChangeLaterChunk();
     }
 
+    public void addCells(){
+        chunks.get("0,0").addCells(new int[][]{new int[]{13, 13}},1);
+        calculateChangeLaterChunk();
+    }
+
     //計算所有chunk
     public int calculateAllChunks() {
-//        //取得所有chunk
-//        Object[] chunks1 = chunks.values().toArray();
-//        //計數器
-//        CountDownLatch countDownLatch = new CountDownLatch(chunks1.length);
-//        //refresh all chunk
-//        for (Object chunk : chunks1) {
-//            calculateTime += ((ChunkNoGui) chunk).calculateChunk();
-//            //TODO this is for debug
-//            calculateTime++;
-//            countDownLatch.countDown();
-//        }
-
-        CountDownLatch countDownLatch = new CountDownLatch(chunks.size());
-//        Collection<ChunkNoGui> chunkCache = new ArrayList<>(chunks.values());
-        chunks.values().parallelStream().forEach((item) -> {
-            calculateTime += item.calculateChunk();
+        //refresh all chunk
+        for (ChunkNoGui chunk : chunks.values()) {
+            calculateTime += chunk.calculateChunk();
             //TODO this is for debug
             calculateTime++;
-            countDownLatch.countDown();
-        });
-
-//        //refresh all chunk
-//        for (Object chunk : chunks1) {
-//            service.execute(() -> {
-//                synchronized (chunks1) {
-//                    count += ((ChunkNoGui) chunk).calculateChunk();
-//                    countDownLatch.countDown();
-//                    //TODO this is for debug
-//                    count++;
-//                }
-//            });
-//        }
-
-//        int eachTime = chunks1.length / 4;
-//        for (int i = 0; i < 4; i++) {
-//            int finalI = i;
-//            service.execute(() -> {
-//                int times = finalI < 3 ? eachTime * (finalI + 1) : chunks1.length;
-//                synchronized (chunks1) {
-//                    for (int j = eachTime * finalI; j < times; j++) {
-//                        count += ((ChunkNoGui) chunks1[j]).calculateChunk();
-//                        countDownLatch.countDown();
-//                        //TODO this is for debug
-//                        count++;
-//                    }
-//                }
-//            });
-//        }
-
-//        int eachTime = chunks1.length / 2;
-//        service.execute(() -> {
-//            for (int j = 0; j < eachTime; j++) {
-//                count += ((ChunkNoGui) chunks1[j]).calculateChunk();
-//                countDownLatch.countDown();
-//                //TODO this is for debug
-//                count++;
-//            }
-//        });
-//
-//        service.execute(() -> {
-//            for (int j = eachTime; j < chunks1.length; j++) {
-//                count += ((ChunkNoGui) chunks1[j]).calculateChunk();
-//                countDownLatch.countDown();
-//                //TODO this is for debug
-//                count++;
-//            }
-//        });
-//
-//        try {
-//            countDownLatch.await();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-
-
-        //計算需要增加的邊緣區域
-
-        try {
-            countDownLatch.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
 
         calculateChangeLaterChunk();
 
         //標記成沒算過
-        for (Object chunk : chunks.values()) {
-            ((ChunkNoGui) chunk).beforeChange = null;
+        for (ChunkNoGui chunk : chunks.values()) {
+            chunk.beforeChange = null;
             //TODO this is for debug
             calculateTime++;
         }
@@ -169,7 +96,7 @@ public class GameCalculatorNoGui {
     }
 
     //經過chunk邊界的資料需要等所有chunk計算完畢再更新資料
-    public void calculateChangeLaterChunk() {
+    private void calculateChangeLaterChunk() {
         for (String i : needChangeChunk) {
             final ChunkNoGui chunk;
             for (int[] j : (chunk = chunks.get(i)).oldCellData) {

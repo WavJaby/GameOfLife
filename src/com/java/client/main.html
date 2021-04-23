@@ -20,6 +20,12 @@
 </div>
 
 <div id="loginPage">
+    <label for="serverIp">Server ip:</label>
+    <input type="text" id="serverIp" value="localhost">
+    <label for="serverPort">port:</label>
+    <input type="text" id="serverPort" value="25565">
+    <br>
+
     <label for="playerName">Player name:</label>
     <input type="text" id="playerName" value="WavJaby"><br>
     <!--    <label for="playerPassWord">PassWord:</label>-->
@@ -39,8 +45,7 @@
         <canvas id="playground"></canvas>
         <canvas id="miniMap"></canvas>
 
-        <button id="start">start</button>
-        <button id="next">next</button>
+        <button id="pause">pause</button>
 
         <div class="location">
             <h4 id="location">座標: 0</h4>

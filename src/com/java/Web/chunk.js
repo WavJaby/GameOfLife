@@ -1,8 +1,6 @@
 class Chunk {
     chunkWidth = 16;
     chunkHeight = 16;
-    pixelSize = 5;
-    gap = 1;
     deadPixel = 'rgb(10, 10, 10)';
     teamAID = 1;
     alivePixelA = 'rgb(0, 200, 200)';
@@ -48,15 +46,14 @@ class Chunk {
 
     //user改變cells
     addCells(changeList, canvas, user) {
-        const pixSize = ((this.pixelSize * screenScale + this.gap) * 10 | 0) / 10;
-        let chunkStartX = this.locX * pixSize * this.chunkWidth;
-        let chunkStartY = this.locY * pixSize * this.chunkHeight;
+        let chunkStartX = this.locX * realPixelSize * this.chunkWidth;
+        let chunkStartY = this.locY * realPixelSize * this.chunkHeight;
 
-        let thisPixSize = pixSize;
+        let thisPixSize = realPixelSize;
         if (screenScale > drawLineScreenScale) {
-            chunkStartX += this.gap / 2;
-            chunkStartY += this.gap / 2;
-            thisPixSize -= this.gap;
+            chunkStartX += cGap / 2;
+            chunkStartY += cGap / 2;
+            thisPixSize -= cGap;
         }
 
         this.count = 0;
@@ -74,8 +71,8 @@ class Chunk {
                 canvas.fillStyle = this.deadPixel;
 
 
-            canvas.fillRect(chunkStartX + pixSize * i[0],
-                chunkStartY + pixSize * i[1],
+            canvas.fillRect(chunkStartX + realPixelSize * i[0],
+                chunkStartY + realPixelSize * i[1],
                 thisPixSize, thisPixSize);
             canvas.fillStyle = this.deadPixel;
 
@@ -344,7 +341,7 @@ class Chunk {
     }
 
     getBeforeChangePixel(x, y) {
-        const kernel = x + "," + y;
+        const kernel = x + ',' + y;
         for (let i = 0; i < this.beforeChange.length; i += 2) {
             if (kernel === this.beforeChange[i])
                 return this.beforeChange[i + 1];
@@ -357,9 +354,8 @@ class Chunk {
 
     //更新整個chunk
     drawChunk(canvas) {
-        const pixSize = ((this.pixelSize * screenScale + this.gap) * 10 | 0) / 10;
-        let chunkStartX = this.locX * pixSize * this.chunkWidth;
-        let chunkStartY = this.locY * pixSize * this.chunkHeight;
+        let chunkStartX = this.locX * realPixelSize * this.chunkWidth;
+        let chunkStartY = this.locY * realPixelSize * this.chunkHeight;
 
         for (const i of this.alivePixelList) {
             const team = this.chunkMap[i[0]][i[1]];
@@ -373,9 +369,9 @@ class Chunk {
             }
 
             //fill square
-            canvas.fillRect(chunkStartX + pixSize * i[0],
-                chunkStartY + pixSize * i[1],
-                pixSize, pixSize);
+            canvas.fillRect(chunkStartX + realPixelSize * i[0],
+                chunkStartY + realPixelSize * i[1],
+                realPixelSize, realPixelSize);
         }
     }
 
@@ -384,15 +380,14 @@ class Chunk {
         if (this.changeList.length === 0)
             return;
 
-        const pixSize = ((this.pixelSize * screenScale + this.gap) * 10 | 0) / 10;
-        let chunkStartX = this.locX * pixSize * this.chunkWidth;
-        let chunkStartY = this.locY * pixSize * this.chunkHeight;
+        let chunkStartX = this.locX * realPixelSize * this.chunkWidth;
+        let chunkStartY = this.locY * realPixelSize * this.chunkHeight;
 
-        let thisPixSize = pixSize;
+        let thisPixSize = realPixelSize;
         if (screenScale > drawLineScreenScale) {
-            chunkStartX += this.gap / 2;
-            chunkStartY += this.gap / 2;
-            thisPixSize -= this.gap;
+            chunkStartX += cGap / 2;
+            chunkStartY += cGap / 2;
+            thisPixSize -= cGap;
         }
 
 
@@ -406,8 +401,8 @@ class Chunk {
                 else if (team === 2)
                     canvas.fillStyle = this.alivePixelB;
             }
-            canvas.fillRect(chunkStartX + pixSize * i[0],
-                chunkStartY + pixSize * i[1],
+            canvas.fillRect(chunkStartX + realPixelSize * i[0],
+                chunkStartY + realPixelSize * i[1],
                 thisPixSize, thisPixSize);
         }
     }
@@ -416,7 +411,7 @@ class Chunk {
         for (let y = 0; y < this.chunkHeight; y++) {
             let str = '';
             for (let x = 0; x < this.chunkWidth; x++) {
-                str += this.cellData[x][y] + ",";
+                str += this.cellData[x][y] + ',';
             }
             console.log(str);
         }
@@ -426,7 +421,7 @@ class Chunk {
         for (let y = 0; y < this.chunkHeight; y++) {
             let str = '';
             for (let x = 0; x < this.chunkWidth; x++) {
-                str += this.chunkMap[x][y] + ",";
+                str += this.chunkMap[x][y] + ',';
             }
             console.log(str);
         }

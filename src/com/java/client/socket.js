@@ -3,18 +3,21 @@ const opcode = new Opcode();
 let serverConnected = false;
 
 function connectSocket() {
+    let ip = document.getElementById('serverIp').value;
+    let port = document.getElementById('serverPort').value;
+
+
     if (!serverConnected)
-        socket = new WebSocket("ws://25.28.184.145:25565");
-        // socket =
+        socket = new WebSocket('ws://' + ip + ':' + port);
 
     socket.onopen = () => {
         serverConnected = true;
-        console.log("connect server success");
+        console.log('connect server success');
     }
 
     socket.onclose = () => {
         serverConnected = false;
-        console.log("server disconnect");
+        console.log('server disconnect');
 
         // setTimeout(connectSocket, 1000);
     }
@@ -23,23 +26,23 @@ function connectSocket() {
         const data = JSON.parse(event.data.substring(1));
         switch (event.data[0]) {
             case opcode.loginSuccess:
-                console.log("loginSuccess");
+                console.log('loginSuccess');
                 loginSuccess(data);
                 break;
             case opcode.data:
-                console.log("getData");
+                // console.log('getData');
                 receiveData(data);
                 break;
             case opcode.loginFailed:
-                console.log("loginFailed");
+                console.log('loginFailed');
                 console.log(data['reason']);
                 break;
             case opcode.connectFailed:
-                console.log("connectFailed");
+                console.log('connectFailed');
                 console.log(data['reason']);
                 break;
             case opcode.error:
-                console.log("error");
+                console.log('error');
                 console.log(data['reason']);
                 break;
         }
@@ -47,8 +50,8 @@ function connectSocket() {
 }
 
 //input
-const connectServerBtn = document.getElementById("connectServer");
-const disconnectServerBtn = document.getElementById("disconnectServer");
+const connectServerBtn = document.getElementById('connectServer');
+const disconnectServerBtn = document.getElementById('disconnectServer');
 
 connectServerBtn.onclick = () => {
     connectSocket();
