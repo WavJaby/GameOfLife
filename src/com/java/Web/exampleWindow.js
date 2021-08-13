@@ -17,6 +17,7 @@ function loadExample() {
         ctx.canvas.width = width;
         ctx.canvas.height = height;
 
+
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const pos = (y * width + x) * 4; // position in buffer based on x and y
@@ -30,7 +31,6 @@ function loadExample() {
                 if ((y / height * modelHeight) - pisY > 0.95)
                     color = 0;
 
-                // let color = 1;
                 // R value [0, 255]
                 buffer[pos] = 0;
                 // G value
