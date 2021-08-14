@@ -342,7 +342,7 @@ window.onload = function () {
         calculateTeam();
         updateMiniMap();
 
-        calculateTime.innerText = '每禎計算時間: ' + (window.performance.now() - timer) + 'ms';
+        calculateTime.innerText = '每幀計算時間: ' + (window.performance.now() - timer) + 'ms';
         calculateCount.innerText = 'for迴圈次數: ' + count;
         timeCount.innerText = '' + ++worldTime;
         count = 0;
@@ -610,15 +610,6 @@ window.onload = function () {
         }
     }
 
-    window.onkeyup = (event) => {
-        // if (selectModel) {
-        //     if (event.key === 'Shift') {
-        //         refreshScreen();
-        //         selectModel = false;
-        //     }
-        // }
-    }
-
     //移動部分
     let drag = false;
     let mapX = 0, mapY = 0;
@@ -803,15 +794,15 @@ window.onload = function () {
 
             let chunkStartX = chunk.locX * realPixelSize * cWidth;
             let chunkStartY = chunk.locY * realPixelSize * cHeight;
-            // for (let i = 0; i < chunk.alivePixelList.length; i++) {
-                // const x = chunk.alivePixelList[i][0];
-                // const y = chunk.alivePixelList[i][1];
-                // let col = (chunk.cellData[x][y] + 1) / 7 * 255;
-                // canvas.fillStyle = `rgb(0,${col},0)`;
-                // canvas.fillRect(chunkStartX + realPixelSize * x + cPixSize * screenScale / 4,
-                    // chunkStartY + realPixelSize * y + cPixSize * screenScale / 4,
-                    // cPixSize * screenScale / 2, cPixSize * screenScale / 2);
-            // }
+            for (let i = 0; i < chunk.alivePixelList.length; i++) {
+                const x = chunk.alivePixelList[i][0];
+                const y = chunk.alivePixelList[i][1];
+                let col = (chunk.cellData[x][y] + 1) / 7 * 255;
+                canvas.fillStyle = `rgb(0,${col},0)`;
+                canvas.fillRect(chunkStartX + realPixelSize * x + cPixSize * screenScale / 4,
+                    chunkStartY + realPixelSize * y + cPixSize * screenScale / 4,
+                    cPixSize * screenScale / 2, cPixSize * screenScale / 2);
+            }
             // canvas.fillStyle = chunk.deadPixel;
 
             // debug用

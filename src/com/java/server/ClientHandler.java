@@ -97,9 +97,8 @@ public class ClientHandler implements Runnable {
                     gameControl.ReceiveData((char) packetData[0], message, id, this);
                 }
 
-
-                long timeEnd = System.nanoTime();
-                System.out.println("use:" + (double) (timeEnd - timeStart) / 1000000 + "ms");
+//                long timeEnd = System.nanoTime();
+//                System.out.println("use:" + (double) (timeEnd - timeStart) / 1000000 + "ms");
 
             }
 
@@ -152,21 +151,28 @@ public class ClientHandler implements Runnable {
      * Data Send
      */
     private CountDownLatch dataSend = new CountDownLatch(0);
+    private int dataSendCount = 0;
 
-    public void sendData(String message) {
-        try {
-            dataSend.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    synchronized public void sendData(String message) {
+//        System.out.println(dataSend.getCount() == 0);
+//        try {
+//            dataSend.await();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//        if (dataSendCount == 0)
+//            //設定這個客戶正在傳輸
+//            dataSend = new CountDownLatch(1);
         splitData(message.getBytes(StandardCharsets.UTF_8));
+//        if (dataSendCount == 0)
+//            //傳輸結束
+//            dataSend.countDown();
     }
 
     private final int maxPayloadLength = 65535;
 
     private void splitData(byte[] message) {
-        //設定這個客戶正在傳輸
-        dataSend = new CountDownLatch(1);
+        dataSendCount++;
         try {
             //等待handshake
             handshake.await();
@@ -192,9 +198,7 @@ public class ClientHandler implements Runnable {
             sendTextFrameData(cache, 1, Opcode.continuationFrame);
         } else
             sendTextFrameData(message, 1, Opcode.textFrame);
-
-        //傳輸結束
-        dataSend.countDown();
+        dataSendCount--;
     }
 
     private void sendTextFrameData(byte[] payloadInput, int fin, int opcode) {

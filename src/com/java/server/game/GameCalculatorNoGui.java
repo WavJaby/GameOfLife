@@ -8,7 +8,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class GameCalculatorNoGui {
-    public static float screenScale = 0.3f;
     public Map<String, ChunkNoGui> chunks = new ConcurrentHashMap<>();
     public List<String> needChangeChunk = new ArrayList<>();
 
@@ -27,8 +26,8 @@ public class GameCalculatorNoGui {
     public int calculateTime = 0;
 
     //兩隊的數量
-    static int teamACount = 0;
-    static int teamBCount = 0;
+    public int teamACount = 0;
+    public int teamBCount = 0;
     //chunk的範圍
     final static int minChunkX = -1000, minChunkY = -1000, maxChunkX = 1000, maxChunkY = 1000;
 
@@ -67,8 +66,8 @@ public class GameCalculatorNoGui {
         calculateChangeLaterChunk();
     }
 
-    public void addCells(){
-        chunks.get("0,0").addCells(new int[][]{new int[]{13, 13}},1);
+    public void addCells() {
+        chunks.get("0,0").addCells(new int[][]{new int[]{13, 13}}, 1);
         calculateChangeLaterChunk();
     }
 
@@ -96,7 +95,7 @@ public class GameCalculatorNoGui {
     }
 
     //經過chunk邊界的資料需要等所有chunk計算完畢再更新資料
-    private void calculateChangeLaterChunk() {
+    public void calculateChangeLaterChunk() {
         for (String i : needChangeChunk) {
             final ChunkNoGui chunk;
             for (int[] j : (chunk = chunks.get(i)).oldCellData) {
@@ -119,6 +118,16 @@ public class GameCalculatorNoGui {
     public ChunkNoGui loadChunk(int x, int y) {
         final ChunkNoGui chunk = new ChunkNoGui(x, y, this);
         chunks.put(x + "," + y, chunk);
+        return chunk;
+    }
+
+    public ChunkNoGui loadChunk(String loc) {
+        String[] location = loc.split(",");
+        final ChunkNoGui chunk = new ChunkNoGui(
+                Integer.parseInt(location[0]),
+                Integer.parseInt(location[1]),
+                this);
+        chunks.put(loc, chunk);
         return chunk;
     }
 

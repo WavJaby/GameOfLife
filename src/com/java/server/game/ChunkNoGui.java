@@ -1,18 +1,16 @@
 package com.java.server.game;
 
-import com.java.game.GameCalculator;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.java.server.game.GameCalculatorNoGui.*;
 
 public class ChunkNoGui {
     private final GameCalculatorNoGui calculator;
 
-    private final int locX;
-    private final int locY;
+    public final int locX;
+    public final int locY;
     public final int chunkWidth = 16;
     public final int chunkHeight = 16;
     private final int teamAID;
@@ -32,7 +30,7 @@ public class ChunkNoGui {
     public List<int[]> changeList = new ArrayList<>();
 
     //活的list
-    public List[] aliveList = new List[]{new ArrayList<String>(), new ArrayList<String>()};
+    public final List[] aliveList = new List[]{new CopyOnWriteArrayList<String>(), new CopyOnWriteArrayList<String>()};
 
     int count = 0;
     boolean isAllZero = false;
@@ -71,12 +69,12 @@ public class ChunkNoGui {
             if (team > 0) {
                 //計算各自的數量
                 if (team == this.teamAID) {
-                    GameCalculatorNoGui.teamACount--;
+                    calculator.teamACount--;
                     this.teamACount--;
                     //刪除
                     aliveList[0].remove(locInt);
                 } else if (team == this.teamBID) {
-                    GameCalculatorNoGui.teamBCount--;
+                    calculator.teamBCount--;
                     this.teamBCount--;
                     //刪除
                     aliveList[1].remove(locInt);
@@ -88,12 +86,12 @@ public class ChunkNoGui {
             } else {
                 //計算各自的數量
                 if (teamID == this.teamAID) {
-                    GameCalculatorNoGui.teamACount++;
+                    calculator.teamACount++;
                     this.teamACount++;
                     //紀錄活細胞座標
                     aliveList[0].add(locInt);
                 } else if (teamID == this.teamBID) {
-                    GameCalculatorNoGui.teamBCount++;
+                    calculator.teamBCount++;
                     this.teamBCount++;
                     //紀錄活細胞座標
                     aliveList[1].add(locInt);
@@ -107,6 +105,8 @@ public class ChunkNoGui {
             if (!isLocInAliveList(i[0], i[1])) {
                 alivePixelList.add(new int[]{i[0], i[1]});
             }
+
+            this.changeList.add(new int[]{i[0], i[1]});
         }
     }
 
@@ -154,7 +154,10 @@ public class ChunkNoGui {
                 }
             }
 
-            if (count == 0 && team == 0) {
+
+            if ((count != 3 && team == 0 &&
+                    aliveX != 0 && aliveY != 0 && aliveX != this.chunkWidth - 1 && aliveY != this.chunkHeight - 1) ||
+                    (count == 0 && team == 0)) {
                 alivePixelList.remove(i);
                 i--;
             } else
@@ -172,12 +175,12 @@ public class ChunkNoGui {
             if (team > 0) {
                 //計算各自的數量
                 if (team == this.teamAID) {
-                    GameCalculatorNoGui.teamACount--;
+                    calculator.teamACount--;
                     this.teamACount--;
                     //刪除
                     aliveList[0].remove(locInt);
                 } else if (team == this.teamBID) {
-                    GameCalculatorNoGui.teamBCount--;
+                    calculator.teamBCount--;
                     this.teamBCount--;
                     //刪除
                     aliveList[1].remove(locInt);
@@ -192,12 +195,12 @@ public class ChunkNoGui {
 
                 //計算各自的數量
                 if (newTeamID == this.teamAID) {
-                    GameCalculatorNoGui.teamACount++;
+                    calculator.teamACount++;
                     this.teamACount++;
                     //紀錄活細胞座標
                     aliveList[0].add(locInt);
                 } else if (newTeamID == this.teamBID) {
-                    GameCalculatorNoGui.teamBCount++;
+                    calculator.teamBCount++;
                     this.teamBCount++;
                     //紀錄活細胞座標
                     aliveList[1].add(locInt);
@@ -240,16 +243,17 @@ public class ChunkNoGui {
             y += cellY;
 
             //有在chunk內
-            if (x > -1 && x < chunkWidth &&
-                    y > -1 && y < chunkHeight) {
+            if (x > -1 && x < chunkWidth && y > -1 && y < chunkHeight) {
+                int nowCell;
                 //活的
                 if (state > 0)
-                    cellData[x][y] += 1;
+                    nowCell = (cellData[x][y] += 1);
                 else
-                    cellData[x][y] -= 1;
+                    nowCell = (cellData[x][y] -= 1);
 
                 //加入關注列表
-                if (!isLocInAliveList(x, y)) {
+                int lastCell = chunkMap[x][y];
+                if (!isLocInAliveList(x, y) && ((lastCell == 0 && nowCell == 3) || (lastCell > 0 && nowCell > 0))) {
                     alivePixelList.add(new int[]{x, y});
                 }
 
@@ -302,7 +306,9 @@ public class ChunkNoGui {
                     nextChunk.oldCellData.add(new int[]{x, y, -1});
 
                 //加入關注列表
-                if (!nextChunk.isLocInAliveList(x, y)) {
+                int nowCell = nextChunk.cellData[x][y];
+                int lastCell = nextChunk.chunkMap[x][y];
+                if (!nextChunk.isLocInAliveList(x, y) && ((lastCell == 0 && nowCell == 3) || (lastCell > 0 && nowCell > 0))) {
                     nextChunk.alivePixelList.add(new int[]{x, y});
                 }
 

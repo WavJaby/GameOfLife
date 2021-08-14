@@ -65,8 +65,6 @@ class Chunk {
         let chunkStartX = this.locX * realPixelSize * this.chunkWidth;
         let chunkStartY = this.locY * realPixelSize * this.chunkHeight;
 
-        let thisPixSize = realPixelSize;
-
         this.count = 0;
         for (const i of changeList) {
             const team = this.chunkMap[i[0]][i[1]];
@@ -141,18 +139,19 @@ class Chunk {
             const aliveY = this.alivePixelList[i][1];
             //附近的細胞數
             const count = this.cellData[aliveX][aliveY];
+            const team = this.chunkMap[aliveX][aliveY];
 
             //地圖邊緣
             if (this.locY > maxChunkY || this.locX > maxChunkX || this.locX < minChunkX || this.locY < minChunkY) {
                 //活的細胞全部殺
-                if (this.chunkMap[aliveX][aliveY] > 0)
+                if (team > 0)
                     this.changeList.push([aliveX, aliveY]);
                 continue;
             }
 
 
             //現在是活的細胞
-            if (this.chunkMap[aliveX][aliveY] > 0) {
+            if (team > 0) {
                 // 生命數量稀少或過多要死亡
                 if (count < 2 || count > 3) {
                     this.changeList.push([aliveX, aliveY]);
@@ -172,7 +171,9 @@ class Chunk {
                 }
             }
 
-            if (count === 0 && this.chunkMap[aliveX][aliveY] === 0) {
+            if ((count !== 3 && team === 0 &&
+                    aliveX !== 0 && aliveY !== 0 && aliveX !== this.chunkWidth - 1 && aliveY !== this.chunkHeight - 1) ||
+                (count === 0 && team === 0)) {
                 this.alivePixelList.splice(i, 1);
                 i--;
             } else
@@ -249,14 +250,16 @@ class Chunk {
             //有在chunk內
             if (x > -1 && x < this.chunkWidth &&
                 y > -1 && y < this.chunkHeight) {
+                let nowCell;
                 //活的
                 if (state > 0)
-                    this.cellData[x][y] += 1;
+                    nowCell = (this.cellData[x][y] += 1);
                 else
-                    this.cellData[x][y] -= 1;
+                    nowCell = (this.cellData[x][y] -= 1);
 
                 //加入關注列表
-                if (!this.isLocInAliveList(x, y)) {
+                const lastCell = this.chunkMap[x][y];
+                if (!this.isLocInAliveList(x, y) && ((lastCell === 0 && nowCell === 3) || (lastCell > 0 && nowCell > 0))) {
                     this.alivePixelList.push([x, y]);
                 }
 
@@ -306,7 +309,9 @@ class Chunk {
                     nextChunk.oldCellData.push([x, y, -1]);
 
                 //加入關注列表
-                if (!nextChunk.isLocInAliveList(x, y)) {
+                const nowCell = nextChunk.cellData[x][y];
+                const lastCell = nextChunk.chunkMap[x][y];
+                if (!nextChunk.isLocInAliveList(x, y) && ((lastCell === 0 && nowCell === 3) || (lastCell > 0 && nowCell > 0))) {
                     nextChunk.alivePixelList.push([x, y]);
                 }
 
@@ -360,6 +365,7 @@ class Chunk {
 
     getBeforeChangePixel(x, y) {
         const kernel = x + ',' + y;
+        // if(this.beforeChange != null)
         for (let i = 0; i < this.beforeChange.length; i += 2) {
             if (kernel === this.beforeChange[i])
                 return this.beforeChange[i + 1];

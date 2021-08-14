@@ -1,7 +1,7 @@
 package com.java.server;
 
 public class JsonBuilder {
-    StringBuilder builder = new StringBuilder();
+    private final StringBuilder builder = new StringBuilder();
     private boolean hasValue = false;
 
     JsonBuilder() {
