@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game of life multiplayer</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="opcode.js"></script>
+    <script src="game.js"></script>
+    <script src="chunk.js"></script>
+
+    <script src="../Web/exampleModels.js"></script>
+    <script src="../Web/exampleWindow.js"></script>
+    <script src="../Web/miniMap.js"></script>
+</head>
+
+<body>
+<div id="serverConnect">
+    <button id="connectServer">Connect</button>
+    <button id="disconnectServer">Disconnect</button>
+</div>
+
+<div id="loginPage">
+    <label for="serverIp">Server ip:</label>
+    <input type="text" id="serverIp" value="localhost">
+    <label for="serverPort">port:</label>
+    <input type="text" id="serverPort" value="25565">
+    <br>
+
+    <label for="playerName">Player name:</label>
+    <input type="text" id="playerName" value="WavJaby">
+    <label for="teamID">TeamID</label>
+    <input type="number" id="teamID" value="1"><br>
+    <!--    <label for="playerPassWord">PassWord:</label>-->
+    <!--    <input type="password" id="playerPassWord"><br>-->
+    <button id="loginServer">Login</button>
+</div>
+
+<div id="gameWindow" style="display: none; width:100%; height:100%">
+    <div id="examples"></div>
+
+    <div id="teamState">
+        <div id="teamA">50%</div>
+        <div id="teamB">50%</div>
+    </div>
+
+    <div id="gamePage">
+        <canvas id="playground"></canvas>
+        <canvas id="miniMap"></canvas>
+
+        <button id="pause">pause</button>
+
+        <div class="location">
+            <h4 id="location">座標: 0</h4>
+        </div>
+        <h4 id="calculateCount">for迴圈次數: 0</h4>
+        <h4 id="calculateTime">每禎計算時間: 0ms</h4>
+
+        <h4 id="count">0</h4>
+    </div>
+</div>
+
+</body>
+
+<footer>
+    <script src="socket.js"></script>
+    <script src="main.js"></script>
+</footer>
+</html>

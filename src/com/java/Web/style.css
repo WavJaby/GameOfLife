@@ -1,0 +1,138 @@
+:root {
+    --teamStatusSize: 15px;
+    --exampleWindowSize: 150px;
+}
+
+html, body {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Old versions of Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+/*範例區*/
+#examples {
+    float: right;
+    overflow: auto;
+    background-color: rgb(50, 50, 50);
+
+    width: var(--exampleWindowSize);
+    height: 100%;
+}
+
+.exampleImage {
+    width: 80%;
+    margin: 10%;
+}
+
+.exampleImage img {
+    width: 100%;
+}
+
+.exampleImage div {
+    font-size: 100%;
+    color: lightgray;
+}
+
+/*遊戲區*/
+#gamePage {
+    overflow: hidden;
+    float: left;
+    cursor: crosshair;
+
+    width: calc(100% - var(--exampleWindowSize));
+    height: calc(100% - var(--teamStatusSize));
+}
+
+#miniMap {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    width: 100px;
+    height: 100px;
+    z-index: 1;
+
+    border: solid 1px darkgray;
+}
+
+/*team*/
+#teamState {
+    width: calc(100% - var(--exampleWindowSize));
+    height: var(--teamStatusSize);
+}
+
+#teamState div {
+    float: left;
+    font-size: 5px;
+
+    width: 50%;
+    height: 100%;
+}
+
+#teamA {
+    text-align: right;
+}
+
+#teamB {
+    text-align: left;
+}
+
+
+/*UI*/
+/*button*/
+#start {
+    position: fixed;
+    left: 10px;
+    top: 15px;
+}
+
+#next {
+    position: fixed;
+    left: 70px;
+    top: 15px;
+}
+
+/*number*/
+.location {
+    position: absolute;
+    left: 10px;
+    bottom: 120px;
+
+    width: 100px;
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+#location {
+    color: limegreen;
+}
+
+#count {
+    color: limegreen;
+    position: fixed;
+    left: 10px;
+    top: 40px;
+}
+
+#calculateTime {
+    color: limegreen;
+    position: fixed;
+    left: 140px;
+    top: 15px;
+}
+
+#calculateCount {
+    color: limegreen;
+    position: fixed;
+    left: 140px;
+    top: 40px;
+}
+
+h4 {
+    margin: 0;
+}
