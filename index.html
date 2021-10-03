@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game Of life</title>
+	<script>
+		fetch('https://raw.githubusercontent.com/WavJaby/GameOfLife/master/src/com/java/Web/style.css').then(function(response) {
+			return response.text();
+		}).then(function(result) {
+			let css = document.createElement('style');
+			css.textContent = result;
+			document.head.appendChild(css);
+		});
+		const scripts = ['main.js', 'chunk.js', 'exampleModels.js', 'exampleWindow.js', 'miniMap.js'];
+		let i = 0;
+		loadScript();
+		function loadScript(){
+			if(i < scripts.length){
+				fetch('https://raw.githubusercontent.com/WavJaby/GameOfLife/master/src/com/java/Web/' + scripts[i]).then(function(response) {
+					return response.text();
+				}).then(function(result) {
+					let js = document.createElement('script');
+					js.textContent = result;
+					document.body.appendChild(js);
+					loadScript();
+				});
+			} else {
+				window.onload();
+			}
+			i++;
+		}
+	</script>
+</head>
+
+<body>
+<div id="examples"></div>
+
+<div id="teamState">
+    <div id="teamA">50%</div>
+    <div id="teamB">50%</div>
+</div>
+
+<div id="gamePage">
+    <canvas id="playground"></canvas>
+    <canvas id="miniMap"></canvas>
+
+    <button id="start">start</button>
+    <button id="next">next</button>
+
+    <div class="location">
+        <h4 id="location">座標: 0</h4>
+    </div>
+    <h4 id="calculateCount">for迴圈次數: 0</h4>
+    <h4 id="calculateTime">每幀計算時間: 0ms</h4>
+
+    <h4 id="count">0</h4>
+</div>
+
+</body>
+
+</html>
