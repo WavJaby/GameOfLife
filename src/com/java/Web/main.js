@@ -750,8 +750,8 @@ window.onload = function () {
             canvas.canvas.width = gameWindow.offsetWidth;
             canvas.canvas.height = gameWindow.offsetHeight;
             canvas.translate(mapX, mapY);
+            refreshScreen();
         }
-        refreshScreen();
     }
 
     function refreshScreen() {
