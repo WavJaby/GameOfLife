@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Game Of life</title>
 	<script>
-		fetch('https://raw.githubusercontent.com/WavJaby/GameOfLife/master/src/com/java/Web/style.css').then(function(response) {
+		fetch('https://raw.githubusercontent.com/WavJaby/GameOfLife/master/src/com/java/Web/style.css', {"method": "GET"}).then(function(response) {
 			return response.text();
 		}).then(function(result) {
 			let css = document.createElement('style');
@@ -16,7 +16,7 @@
 		loadScript();
 		function loadScript(){
 			if(i < scripts.length){
-				fetch('https://raw.githubusercontent.com/WavJaby/GameOfLife/master/src/com/java/Web/' + scripts[i]).then(function(response) {
+				fetch('https://raw.githubusercontent.com/WavJaby/GameOfLife/master/src/com/java/Web/' + scripts[i], {"method": "GET"}).then(function(response) {
 					return response.text();
 				}).then(function(result) {
 					let js = document.createElement('script');
