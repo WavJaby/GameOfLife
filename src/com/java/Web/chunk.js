@@ -130,7 +130,7 @@ class Chunk {
 
     //計算所有細胞死活
     calculateChunk() {
-        this.changeList = [];
+        this.changeList.length = 0;
         this.beforeChange = [];
         let isAllZero = true;
 
@@ -213,6 +213,8 @@ class Chunk {
                 }
                 this.chunkAliveCount++;
             }
+            //TODO this is for debug
+            this.count++;
         }
 
         //unload chunk如果沒用

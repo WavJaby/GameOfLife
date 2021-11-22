@@ -54,7 +54,7 @@ window.onload = function () {
     teamA.style.backgroundColor = homeChunk.alivePixelA;
     teamB.style.backgroundColor = homeChunk.alivePixelB;
 
-    if (0) {
+    if (1) {
         homeChunk.addCells([
 		[12,2],[13,2],[14,2],[11,3],[14,3],[15,3],[10,4],[14,4],[10,5],[15,5],[12,6],[0,7],[1,7],[2,7],[3,7],[9,7],[11,7],[0,8],
 		[4,8],[5,8],[7,8],[9,8],[10,8],[11,8],[13,8],[14,8],[0,9],[6,9],[7,9],[13,9],[1,10],[4,10],[5,10],[7,10],[10,10],[13,10],
