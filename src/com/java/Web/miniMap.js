@@ -88,29 +88,31 @@ function refreshMiniMap() {
 
     for (let x = 0; x < width; x++) {
         for (let y = 0; y < height; y++) {
-            const chunk = chunks[(lastChunkX + x - width / 2 | 0) + ',' + (lastChunkY + y - height / 2 | 0)];
-            if (chunk !== undefined) {
-                const teamAc = chunk.teamACount;
-                const teamBc = chunk.teamBCount;
+            let chunk = chunks[lastChunkX + x - width / 2 | 0];
+            if (chunk === undefined) continue;
+            chunk = chunk[lastChunkY + y - height / 2 | 0]
+            if (chunk === undefined) continue;
 
-                let r, g, b;
-                if (teamAc > threshold && teamAc > teamBc) {
-                    let scale = (teamAc + 20) / maxPixNum;
-                    r = teamAColor[0] * scale;
-                    g = teamAColor[1] * scale;
-                    b = teamAColor[2] * scale;
-                } else if (teamBc > threshold && teamBc > teamAc) {
-                    let scale = (teamBc + 20) / maxPixNum;
-                    r = teamBColor[0] * scale;
-                    g = teamBColor[1] * scale;
-                    b = teamBColor[2] * scale;
-                } else {
-                    continue;
-                }
+            const teamAc = chunk.teamACount;
+            const teamBc = chunk.teamBCount;
 
-                miniMapCanvas.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
-                miniMapCanvas.fillRect(x * mapScale, y * mapScale, mapScale, mapScale);
+            let r, g, b;
+            if (teamAc > threshold && teamAc > teamBc) {
+                let scale = (teamAc + 20) / maxPixNum;
+                r = teamAColor[0] * scale;
+                g = teamAColor[1] * scale;
+                b = teamAColor[2] * scale;
+            } else if (teamBc > threshold && teamBc > teamAc) {
+                let scale = (teamBc + 20) / maxPixNum;
+                r = teamBColor[0] * scale;
+                g = teamBColor[1] * scale;
+                b = teamBColor[2] * scale;
+            } else {
+                continue;
             }
+
+            miniMapCanvas.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
+            miniMapCanvas.fillRect(x * mapScale, y * mapScale, mapScale, mapScale);
         }
     }
 

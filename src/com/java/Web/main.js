@@ -44,45 +44,35 @@ window.onload = function () {
     cPixSize = drawPixSize;
     realPixelSize = ((cPixSize * screenScale) * 10 | 0) / 10;
     //setup 數值
-    const homeChunk = new Chunk(0, 0);
+    const homeChunk = getChunk(0, 0);
     cWidth = homeChunk.chunkWidth;
     cHeight = homeChunk.chunkHeight;
 
-    chunks['0,0'] = homeChunk;
 
     gameWindow.style.backgroundColor = homeChunk.deadPixel;
     teamA.style.backgroundColor = homeChunk.alivePixelA;
     teamB.style.backgroundColor = homeChunk.alivePixelB;
 
-    if (0) {
+    if (1) {
         homeChunk.addCells([
-		[12,2],[13,2],[14,2],[11,3],[14,3],[15,3],[10,4],[14,4],[10,5],[15,5],[12,6],[0,7],[1,7],[2,7],[3,7],[9,7],[11,7],[0,8],
-		[4,8],[5,8],[7,8],[9,8],[10,8],[11,8],[13,8],[14,8],[0,9],[6,9],[7,9],[13,9],[1,10],[4,10],[5,10],[7,10],[10,10],[13,10],
-		[15,10],[7,11],[9,11],[11,11],[13,11],[15,11],[1,12],[4,12],[5,12],[7,12],[10,12],[13,12],[0,13],[6,13],[7,13],[11,13],
-		[13,13],[15,13],[0,14],[4,14],[5,14],[7,14],[9,14],[10,14],[13,14],[0,15],[1,15],[2,15],[3,15],[9,15],[11,15],[13,15],[15,15]
-	], canvas, 2);
-        if (chunks['1,0'] === undefined)
-            chunks['1,0'] = loadChunk(1, 0)
-        chunks['1,0'].addCells([
-		[2,0],[1,1],[2,1],[3,1],[3,2],[4,2],[0,3],[3,3],[5,3],[6,3],[0,4],[3,4],[5,4],[1,5],[3,5],[5,5],[7,5],[8,5],[1,6],[3,6],[7,6],
-		[8,6],[0,7],[4,7],[6,7],[7,7],[8,7],[8,8],[9,8],[0,10],[1,11],[7,11],[8,11],[9,11],[10,11],[0,12],[1,12],[3,12],[5,12],[6,12],
-		[10,12],[3,13],[4,13],[10,13],[0,14],[3,14],[5,14],[6,14],[9,14],[1,15],[3,15]
-	], canvas, 1);
-
-        if (chunks['0,1'] === undefined)
-            chunks['0,1'] = loadChunk(0, 1)
-        chunks['0,1'].addCells([
-		[10,0],[11,0],[13,0],[13,1],[1,2],[2,2],[12,2],[13,2],[15,2],[2,3],[3,3],[4,3],[6,3],[10,3],[15,3],[2,4],[3,4],[7,4],[9,4],
-		[14,4],[2,5],[3,5],[5,5],[7,5],[9,5],[11,5],[5,6],[7,6],[10,6],[12,6],[4,7],[5,7],[7,7],[10,7],[11,7],[12,7],[15,7],[6,8],
-		[7,8],[12,8],[13,8],[14,8],[7,9],[8,9],[9,9],[8,10]], canvas, 2);
-
-        if (chunks['1,1'] === undefined)
-            chunks['1,1'] = loadChunk(1, 1)
-        chunks['1,1'].addCells([
-            [0, 0],[3, 0],[5, 0],[6, 0],[9, 0],[3, 1],[4, 1],[10, 1],[0, 2],[1, 2],[3, 2],[5, 2],[6, 2],[10, 2],[1, 3],[7, 3],[8, 3],[9, 3],
-            [10, 3],[0, 5],[0, 6]
+            [12, 2], [13, 2], [14, 2], [11, 3], [14, 3], [15, 3], [10, 4], [14, 4], [10, 5], [15, 5], [12, 6], [0, 7], [1, 7], [2, 7], [3, 7], [9, 7], [11, 7], [0, 8],
+            [4, 8], [5, 8], [7, 8], [9, 8], [10, 8], [11, 8], [13, 8], [14, 8], [0, 9], [6, 9], [7, 9], [13, 9], [1, 10], [4, 10], [5, 10], [7, 10], [10, 10], [13, 10],
+            [15, 10], [7, 11], [9, 11], [11, 11], [13, 11], [15, 11], [1, 12], [4, 12], [5, 12], [7, 12], [10, 12], [13, 12], [0, 13], [6, 13], [7, 13], [11, 13],
+            [13, 13], [15, 13], [0, 14], [4, 14], [5, 14], [7, 14], [9, 14], [10, 14], [13, 14], [0, 15], [1, 15], [2, 15], [3, 15], [9, 15], [11, 15], [13, 15], [15, 15]
+        ], canvas, 2);
+        getChunk(1, 0).addCells([
+            [2, 0], [1, 1], [2, 1], [3, 1], [3, 2], [4, 2], [0, 3], [3, 3], [5, 3], [6, 3], [0, 4], [3, 4], [5, 4], [1, 5], [3, 5], [5, 5], [7, 5], [8, 5], [1, 6], [3, 6], [7, 6],
+            [8, 6], [0, 7], [4, 7], [6, 7], [7, 7], [8, 7], [8, 8], [9, 8], [0, 10], [1, 11], [7, 11], [8, 11], [9, 11], [10, 11], [0, 12], [1, 12], [3, 12], [5, 12], [6, 12],
+            [10, 12], [3, 13], [4, 13], [10, 13], [0, 14], [3, 14], [5, 14], [6, 14], [9, 14], [1, 15], [3, 15]
         ], canvas, 1);
-        calculateChangeLaterChunk();
+        getChunk(0, 1).addCells([
+            [10, 0], [11, 0], [13, 0], [13, 1], [1, 2], [2, 2], [12, 2], [13, 2], [15, 2], [2, 3], [3, 3], [4, 3], [6, 3], [10, 3], [15, 3], [2, 4], [3, 4], [7, 4], [9, 4],
+            [14, 4], [2, 5], [3, 5], [5, 5], [7, 5], [9, 5], [11, 5], [5, 6], [7, 6], [10, 6], [12, 6], [4, 7], [5, 7], [7, 7], [10, 7], [11, 7], [12, 7], [15, 7], [6, 8],
+            [7, 8], [12, 8], [13, 8], [14, 8], [7, 9], [8, 9], [9, 9], [8, 10]], canvas, 2);
+        getChunk(1, 1).addCells([
+            [0, 0], [3, 0], [5, 0], [6, 0], [9, 0], [3, 1], [4, 1], [10, 1], [0, 2], [1, 2], [3, 2], [5, 2], [6, 2], [10, 2], [1, 3], [7, 3], [8, 3], [9, 3],
+            [10, 3], [0, 5], [0, 6]
+        ], canvas, 1);
     }
 
     function drawAllChunks() {
@@ -102,20 +92,20 @@ window.onload = function () {
 
         for (let x = 0; x < xChunkCount; x++) {
             //計算chunk位置X
-            let cx = startX + x | 0;
+            const cx = chunks[startX + x | 0];
+            if (cx === undefined) continue;
             for (let y = 0; y < yChunkCount; y++) {
                 //計算chunk位置Y
-                let cy = startY + y | 0;
-
-                if (chunks[cx + ',' + cy] !== undefined)
-                    chunks[cx + ',' + cy].drawChunk(canvas);
+                const cy = cx[startY + y | 0];
+                if (cy !== undefined)
+                    cy.drawChunk(canvas);
             }
         }
 
         if (screenScale > drawLineScreenScale) {
-			canvas.lineWidth = cGap;
-			canvas.strokeStyle = strokeStyle;
-			canvas.beginPath();
+            canvas.lineWidth = cGap;
+            canvas.strokeStyle = strokeStyle;
+            canvas.beginPath();
             const lStartX = startX * realPixelSize * cWidth;
             const lStartY = startY * realPixelSize * cHeight;
             const viewWidth = lStartX + xChunkCount * realPixelSize * cWidth;
@@ -129,7 +119,7 @@ window.onload = function () {
                 canvas.moveTo(lStartX + x * realPixelSize, lStartY);
                 canvas.lineTo(lStartX + x * realPixelSize, viewHeight);
             }
-			canvas.stroke();
+            canvas.stroke();
         }
     }
 
@@ -138,11 +128,21 @@ window.onload = function () {
         let timer = window.performance.now();
         //calculate all chunk
         for (const i in chunks) {
-            count += chunks[i].calculateChunk();
-            //TODO this is for debug
-            count++;
+            const cx = chunks[i];
+            for (const j in cx) {
+                cx[j].calculateChange();
+                //TODO this is for debug
+                count++;
+            }
         }
-        calculateChangeLaterChunk();
+        for (const i in chunks) {
+            const cx = chunks[i];
+            for (const j in cx) {
+                count += cx[j].calculateChunk();
+                //TODO this is for debug
+                count++;
+            }
+        }
 
         //更新畫面
         const adjustX = mapX < 0;
@@ -156,12 +156,15 @@ window.onload = function () {
         const startY = ((-mapY / realPixelSize / cHeight | 0) - 1 + adjustY);
 
         for (const i in chunks) {
-            //標記成沒算過
-            chunks[i].beforeChange = null;
-            const thisChunk = chunks[i];
-            if (thisChunk.locX >= startX && thisChunk.locX < startX + xChunkCount &&
-                thisChunk.locY >= startY && thisChunk.locY < startY + yChunkCount)
-                thisChunk.drawChangeCells(canvas);
+            const cx = chunks[i];
+            for (const j in cx) {
+                const thisChunk = cx[j];
+                if (thisChunk.locX >= startX && thisChunk.locX < startX + xChunkCount &&
+                    thisChunk.locY >= startY && thisChunk.locY < startY + yChunkCount)
+                    thisChunk.drawChangeCells(canvas);
+                else
+                    thisChunk.onlyUpdateMap();
+            }
         }
 
         calculateTeam();
@@ -200,7 +203,7 @@ window.onload = function () {
             startButton.innerText = 'stop';
             interval = setInterval(() => {
                 calculateAllChunks();
-                // debug();
+                // refreshScreen();
             }, 10);
         } else {
             startButton.innerText = 'start';
@@ -211,7 +214,7 @@ window.onload = function () {
 
     nextButton.onclick = () => {
         calculateAllChunks();
-        // debug();
+        // refreshScreen();
     };
 
     //範例
@@ -274,9 +277,9 @@ window.onload = function () {
         //置中
         startX -= realPixelSize * (modelWidth / 2 | 0);
         startY -= realPixelSize * (modelHeight / 2 | 0);
-		let startXsav = startX;
-		let startYsav = startY;
-		
+        let startXsav = startX;
+        let startYsav = startY;
+
         //負的地方需要更改
         if ((x - mapX) < realPixelSize / 2)
             startX -= realPixelSize;
@@ -308,7 +311,9 @@ window.onload = function () {
                 let yInC = startY / realPixelSize - (cy * cHeight) | 0;
 
                 if (lastCx !== cx || lastCy !== cy) {
-                    chunk = chunks[cx + ',' + cy];
+                    chunk = chunks[cx];
+                    if (chunk !== undefined)
+                        chunk = chunk[cy];
                     lastCx = cx;
                     lastCy = cy;
                 }
@@ -340,49 +345,47 @@ window.onload = function () {
                         }
 
                     //加入替換清單
-                    let thisChunk = needChangeChunk[cx + ',' + cy]
-                    if (!thisChunk)
-                        thisChunk = needChangeChunk[cx + ',' + cy] = [];
-                    thisChunk.push([xInC, yInC])
+                    const thisChunk = needChangeChunk[cx + ',' + cy];
+                    if (thisChunk === undefined)
+                        needChangeChunk[cx + ',' + cy] = [[xInC, yInC]];
+                    else
+                        thisChunk.push([xInC, yInC])
                 }
             }
             startX = cache;
         }
-		
+
         if (!clear) {
             for (const i in needChangeChunk) {
-                let chunk = chunks[i];
-                const j = i.split(',')
-                //沒load的話
-                if (chunk === undefined)
-                    chunk = loadChunk(parseInt(j[0]), parseInt(j[1]));
-                chunk.addCells(needChangeChunk[i], canvas, teamID)
+                const j = i.split(',');
+                getChunk(parseInt(j[0]), parseInt(j[1]))
+                    .addCells(needChangeChunk[i], canvas, teamID)
             }
-            calculateChangeLaterChunk();
+            // calculateChangeLaterChunk();
             return true;
         }
-		
-		startXsav += realPixelSize;
-		startYsav += realPixelSize;
-		
-		if (screenScale > drawLineScreenScale) {
-			canvas.lineWidth = cGap;
-			canvas.strokeStyle = strokeStyle;
-			canvas.beginPath();
+
+        startXsav += realPixelSize;
+        startYsav += realPixelSize;
+
+        if (screenScale > drawLineScreenScale) {
+            canvas.lineWidth = cGap;
+            canvas.strokeStyle = strokeStyle;
+            canvas.beginPath();
             const viewWidth = startXsav + modelWidth * realPixelSize;
             const viewHeight = startYsav + modelHeight * realPixelSize;
-            for (let y = 0; y < modelHeight+1; y++) {
-				let ly = startYsav + y * realPixelSize;
+            for (let y = 0; y < modelHeight + 1; y++) {
+                let ly = startYsav + y * realPixelSize;
                 canvas.moveTo(startXsav, ly);
                 canvas.lineTo(viewWidth, ly);
             }
 
-            for (let x = 0; x < modelWidth+1; x++) {
-				let lx = startXsav + x * realPixelSize;
+            for (let x = 0; x < modelWidth + 1; x++) {
+                let lx = startXsav + x * realPixelSize;
                 canvas.moveTo(lx, startYsav);
                 canvas.lineTo(lx, viewHeight);
             }
-			canvas.stroke();
+            canvas.stroke();
         }
     }
 
@@ -473,12 +476,7 @@ window.onload = function () {
                 if (y < 0)
                     cy--;
 
-                // console.log(cx, cy, x, y)
-
-                let chunk = chunks[cx + ',' + cy];
-                //沒load的話
-                if (chunk === undefined)
-                    chunk = loadChunk(cx, cy);
+                const chunk = getChunk(cx, cy);
 
                 //chunk裡的x,y
                 let xInC = x - (cx * cWidth) | 0;
@@ -490,7 +488,7 @@ window.onload = function () {
                     canvas.fillRect(chunkStartX + xInC * realPixelSize, chunkStartY + yInC * realPixelSize, realPixelSize, realPixelSize);
                 } else {
                     chunk.addCells([[xInC, yInC]], canvas, teamID);
-                    calculateChangeLaterChunk();
+                    // calculateChangeLaterChunk();
                     calculateTeam();
                 }
                 // chunk.drawChangeCells(canvas);
@@ -615,80 +613,80 @@ window.onload = function () {
 
     function debug() {
         for (const i in chunks) {
-            const chunk = chunks[i];
+            const chunkX = chunks[i];
+            for (const j in chunkX) {
+                const chunk = chunkX[j];
 
-            let chunkStartX = chunk.locX * realPixelSize * cWidth;
-            let chunkStartY = chunk.locY * realPixelSize * cHeight;
-            for (let i = 0; i < chunk.alivePixelList.length; i++) {
-                const x = chunk.alivePixelList[i][0];
-                const y = chunk.alivePixelList[i][1];
-                let col = (chunk.cellData[x][y] + 1) / 7 * 255;
-                canvas.fillStyle = `rgb(0,${col},0)`;
-                canvas.fillRect(chunkStartX + realPixelSize * x + cPixSize * screenScale / 4,
-                    chunkStartY + realPixelSize * y + cPixSize * screenScale / 4,
-                    cPixSize * screenScale / 2, cPixSize * screenScale / 2);
-            }
-            // canvas.fillStyle = chunk.deadPixel;
+                let chunkStartX = chunk.locX * realPixelSize * cWidth;
+                let chunkStartY = chunk.locY * realPixelSize * cHeight;
+                for (let i = 0; i < chunk.aliveLength; i++) {
+                    const [x, y] = chunk.getAlivePixelPos(i);
+                    if (x === -1) break;
+                    let col = (chunk.cellData[x][y] + 1) / 7 * 255;
+                    canvas.fillStyle = `rgb(0,${col},0)`;
+                    canvas.fillRect(chunkStartX + realPixelSize * x + cPixSize * screenScale / 4,
+                        chunkStartY + realPixelSize * y + cPixSize * screenScale / 4,
+                        cPixSize * screenScale / 2, cPixSize * screenScale / 2);
+                }
+                canvas.font = '12px Arial';
 
-            // debug用
-            canvas.beginPath();
-            canvas.lineWidth = '2';
-            canvas.strokeStyle = 'blue';
-            canvas.rect(
-                chunkStartX, chunkStartY,
-                realPixelSize * cWidth,
-                realPixelSize * cHeight);
-            canvas.stroke();
+                // debug用
+                canvas.beginPath();
+                canvas.lineWidth = '2';
+                canvas.strokeStyle = 'blue';
+                canvas.rect(
+                    chunkStartX, chunkStartY,
+                    realPixelSize * cWidth,
+                    realPixelSize * cHeight);
+                canvas.stroke();
 
-            canvas.font = '12px white';
-            canvas.fillStyle = 'red';
-            canvas.fillText(chunk.locX + ',' + chunk.locY,
-                chunkStartX,
-                chunkStartY + 10);
+                canvas.textAlign = 'left';
+                canvas.fillStyle = 'blue';
+                canvas.fillText(chunk.locX + ',' + chunk.locY,
+                    chunkStartX + 2,
+                    chunkStartY + 12);
 
-            canvas.font = '10px';
-            canvas.fillStyle = 'red';
-            // console.log(chunkStartX, chunkStartY)
-            for (let y = 0; y < cHeight; y++) {
-                for (let x = 0; x < cWidth; x++) {
-                    canvas.fillText(chunk.cellData[x][y], chunkStartX + x * realPixelSize + cPixSize * screenScale / 2,
-                        chunkStartY + y * realPixelSize + cPixSize * screenScale / 2);
+                canvas.textAlign = 'center';
+                canvas.fillStyle = 'red';
+                // console.log(chunkStartX, chunkStartY)
+                for (let y = 0; y < cHeight; y++) {
+                    for (let x = 0; x < cWidth; x++) {
+                        if (chunk.cellData[x][y] > 0)
+                            canvas.fillText(chunk.cellData[x][y], chunkStartX + x * realPixelSize + cPixSize * screenScale / 2,
+                                chunkStartY + y * realPixelSize + cPixSize * screenScale / 2 + 5);
+                    }
                 }
             }
         }
     }
 }
 
-//經過chunk邊界的資料需要等所有chunk計算完畢再更新資料
-const calculateChangeLaterChunk = () => {
-    for (const i of needChangeChunk) {
-        const thisChunk = chunks[i];
-        for (const j of thisChunk.oldCellData) {
-            thisChunk.cellData[j[0]][j[1]] += j[2];
-            if (!thisChunk.isLocInAliveList(j[0], j[1])) {
-                thisChunk.alivePixelList.push([j[0], j[1]]);
-            }
-
-            //TODO this is for debug
-            count++;
-        }
-        chunks[i].oldCellData = [];
-    }
-    needChangeChunk = [];
-}
-
-const loadChunk = (x, y) => {
+const loadChunk = function (x, y) {
     const chunk = new Chunk(x, y);
-    chunks[x + ',' + y] = chunk;
-    // chunk.drawChunk(canvas);
-    // console.log('load chunk: ' + x + ',' + y)
+    let cx = chunks[x];
+    if (cx === undefined)
+        cx = chunks[x] = {};
+    cx[y] = chunk;
     return chunk;
 }
 
-const unloadChunk = (x, y) => {
-    if (chunks[x + ',' + y] !== undefined)
-        delete chunks[x + ',' + y];
+function getChunk(x, y) {
+    let chunk = chunks[x];
+    if (chunk === undefined)
+        return loadChunk(x, y);
+    chunk = chunk[y];
+    if (chunk === undefined)
+        return loadChunk(x, y);
+    return chunk;
 }
+
+const unloadChunk = function (x, y) {
+    const chunk = chunks[x];
+    if (chunk !== undefined && chunk[y] !== undefined)
+        delete chunks[x][y];
+}
+
+const out = console.log;
 
 const abs = (input) => {
     return input < 0 ? -input : input;
