@@ -1,6 +1,4 @@
 let chunks = {};
-let needChangeChunk = [];
-let canvas;
 //螢幕設定
 let screenScale = 1.5;
 let screenMinScale = 0.1;
@@ -14,47 +12,52 @@ let worldTime = 0;
 //兩隊的數量
 let teamACount = 0;
 let teamBCount = 0;
+const teams = [0, 0];
+const colors = [
+    new Color(10, 10, 10),
+    new Color(0, 200, 200),
+    new Color(200, 200, 200)
+]
 
 //chunk的範圍
 let minChunkX = -1000, minChunkY = -1000, maxChunkX = 1000, maxChunkY = 1000;
-//算小地圖用
-let lastChunkX = 0, lastChunkY = 0;
 
 //在的隊伍
 let teamID = 2;
 
 //chunk的資訊
-let cWidth, cHeight, cPixSize, cGap;
+const chunkWidth = 16, chunkHeight = 16
+const cellSize = 10, cellWallGap = 2;
+let cellGap = 0;
 
 let realPixelSize;
 
-let count = 0;
-
 window.onload = function () {
     const playground = document.getElementById('playground');
-    canvas = playground.getContext('2d');
+    const canvas = playground.getContext('2d');
+
+    const canvasHelper = new Worker('canvas.js');
+    const minMap = new MiniMap(colors, canvas.canvas);
+    // worker.onmessage = function (e) {
+    //     console.log(e.data);
+    // }
+
+    // canvasHelper.postMessage(document);
+
+
     const gameWindow = document.getElementById('gamePage');
 
     const teamA = document.getElementById('teamA');
     const teamB = document.getElementById('teamB');
 
-    const drawPixGap = 2;
-    const drawPixSize = 10;
-    cGap = 0;
-    cPixSize = drawPixSize;
-    realPixelSize = ((cPixSize * screenScale) * 10 | 0) / 10;
-    //setup 數值
-    const homeChunk = getChunk(0, 0);
-    cWidth = homeChunk.chunkWidth;
-    cHeight = homeChunk.chunkHeight;
+    realPixelSize = ((cellSize * screenScale) * 10 | 0) / 10;
 
-
-    gameWindow.style.backgroundColor = homeChunk.deadPixel;
-    teamA.style.backgroundColor = homeChunk.alivePixelA;
-    teamB.style.backgroundColor = homeChunk.alivePixelB;
+    gameWindow.style.backgroundColor = colors[0].toString();
+    teamA.style.backgroundColor = colors[1].toString();
+    teamB.style.backgroundColor = colors[2].toString();
 
     if (1) {
-        homeChunk.addCells([
+        getChunk(0, 0).addCells([
             [12, 2], [13, 2], [14, 2], [11, 3], [14, 3], [15, 3], [10, 4], [14, 4], [10, 5], [15, 5], [12, 6], [0, 7], [1, 7], [2, 7], [3, 7], [9, 7], [11, 7], [0, 8],
             [4, 8], [5, 8], [7, 8], [9, 8], [10, 8], [11, 8], [13, 8], [14, 8], [0, 9], [6, 9], [7, 9], [13, 9], [1, 10], [4, 10], [5, 10], [7, 10], [10, 10], [13, 10],
             [15, 10], [7, 11], [9, 11], [11, 11], [13, 11], [15, 11], [1, 12], [4, 12], [5, 12], [7, 12], [10, 12], [13, 12], [0, 13], [6, 13], [7, 13], [11, 13],
@@ -68,11 +71,13 @@ window.onload = function () {
         getChunk(0, 1).addCells([
             [10, 0], [11, 0], [13, 0], [13, 1], [1, 2], [2, 2], [12, 2], [13, 2], [15, 2], [2, 3], [3, 3], [4, 3], [6, 3], [10, 3], [15, 3], [2, 4], [3, 4], [7, 4], [9, 4],
             [14, 4], [2, 5], [3, 5], [5, 5], [7, 5], [9, 5], [11, 5], [5, 6], [7, 6], [10, 6], [12, 6], [4, 7], [5, 7], [7, 7], [10, 7], [11, 7], [12, 7], [15, 7], [6, 8],
-            [7, 8], [12, 8], [13, 8], [14, 8], [7, 9], [8, 9], [9, 9], [8, 10]], canvas, 2);
+            [7, 8], [12, 8], [13, 8], [14, 8], [7, 9], [8, 9], [9, 9], [8, 10]
+        ], canvas, 2);
         getChunk(1, 1).addCells([
             [0, 0], [3, 0], [5, 0], [6, 0], [9, 0], [3, 1], [4, 1], [10, 1], [0, 2], [1, 2], [3, 2], [5, 2], [6, 2], [10, 2], [1, 3], [7, 3], [8, 3], [9, 3],
             [10, 3], [0, 5], [0, 6]
         ], canvas, 1);
+        // calculateTeam();
     }
 
     function drawAllChunks() {
@@ -80,15 +85,14 @@ window.onload = function () {
         const adjustY = mapY < 0;
 
         //計算畫面中有幾個chunk
-        const xChunkCount = (canvas.canvas.width / (realPixelSize * cWidth) | 0) + 2;
-        const yChunkCount = (canvas.canvas.height / (realPixelSize * cHeight) | 0) + 2;
+        const xChunkCount = (canvas.canvas.width / (realPixelSize * chunkWidth) | 0) + 2;
+        const yChunkCount = (canvas.canvas.height / (realPixelSize * chunkHeight) | 0) + 2;
 
         //計算chunk開始位置X
-        const startX = ((-mapX / realPixelSize / cWidth | 0) - 1 + adjustX);
+        const startX = ((-mapX / realPixelSize / chunkWidth | 0) - 1 + adjustX);
         //計算chunk開始位置Y
-        const startY = ((-mapY / realPixelSize / cHeight | 0) - 1 + adjustY);
-        lastChunkX = startX + xChunkCount / 2;
-        lastChunkY = startY + yChunkCount / 2;
+        const startY = ((-mapY / realPixelSize / chunkHeight | 0) - 1 + adjustY);
+        minMap.setLocation(startX + 1, startY + 1, xChunkCount - 2, yChunkCount - 2);
 
         for (let x = 0; x < xChunkCount; x++) {
             //計算chunk位置X
@@ -103,19 +107,19 @@ window.onload = function () {
         }
 
         if (screenScale > drawLineScreenScale) {
-            canvas.lineWidth = cGap;
+            canvas.lineWidth = cellGap;
             canvas.strokeStyle = strokeStyle;
             canvas.beginPath();
-            const lStartX = startX * realPixelSize * cWidth;
-            const lStartY = startY * realPixelSize * cHeight;
-            const viewWidth = lStartX + xChunkCount * realPixelSize * cWidth;
-            const viewHeight = lStartY + yChunkCount * realPixelSize * cHeight;
-            for (let y = 0; y < yChunkCount * cHeight; y++) {
+            const lStartX = startX * realPixelSize * chunkWidth;
+            const lStartY = startY * realPixelSize * chunkHeight;
+            const viewWidth = lStartX + xChunkCount * realPixelSize * chunkWidth;
+            const viewHeight = lStartY + yChunkCount * realPixelSize * chunkHeight;
+            for (let y = 0; y < yChunkCount * chunkHeight; y++) {
                 canvas.moveTo(lStartX, lStartY + y * realPixelSize);
                 canvas.lineTo(viewWidth, lStartY + y * realPixelSize);
             }
 
-            for (let x = 0; x < xChunkCount * cWidth; x++) {
+            for (let x = 0; x < xChunkCount * chunkWidth; x++) {
                 canvas.moveTo(lStartX + x * realPixelSize, lStartY);
                 canvas.lineTo(lStartX + x * realPixelSize, viewHeight);
             }
@@ -126,67 +130,65 @@ window.onload = function () {
     //計算所有chunk
     function calculateAllChunks() {
         let timer = window.performance.now();
+        let count = 0;
+        let needChange = [];
         //calculate all chunk
         for (const i in chunks) {
             const cx = chunks[i];
             for (const j in cx) {
-                cx[j].calculateChange();
+                const chunk = cx[j];
+                if (chunk.calculateChange(worldTime % 16 === 0))
+                    needChange.push(chunk);
                 //TODO this is for debug
                 count++;
             }
         }
-        for (const i in chunks) {
-            const cx = chunks[i];
-            for (const j in cx) {
-                count += cx[j].calculateChunk();
-                //TODO this is for debug
-                count++;
-            }
+        for (const chunk of needChange) {
+            count += chunk.calculateChunk();
+            //TODO this is for debug
+            count++;
+        }
+        for (const chunk of needChange) {
+            count += chunk.updateMap();
+            //TODO this is for debug
+            count++;
         }
 
         //更新畫面
         const adjustX = mapX < 0;
         const adjustY = mapY < 0;
         //計算畫面中有幾個chunk
-        const xChunkCount = (canvas.canvas.width / (realPixelSize * cWidth) | 0) + 2;
-        const yChunkCount = (canvas.canvas.height / (realPixelSize * cHeight) | 0) + 2;
+        const xChunkCount = (canvas.canvas.width / (realPixelSize * chunkWidth) | 0) + 2;
+        const yChunkCount = (canvas.canvas.height / (realPixelSize * chunkHeight) | 0) + 2;
         //計算chunk開始位置X
-        const startX = ((-mapX / realPixelSize / cWidth | 0) - 1 + adjustX);
+        const startX = ((-mapX / realPixelSize / chunkWidth | 0) - 1 + adjustX);
         //計算chunk開始位置Y
-        const startY = ((-mapY / realPixelSize / cHeight | 0) - 1 + adjustY);
-
-        for (const i in chunks) {
-            const cx = chunks[i];
-            for (const j in cx) {
-                const thisChunk = cx[j];
-                if (thisChunk.locX >= startX && thisChunk.locX < startX + xChunkCount &&
-                    thisChunk.locY >= startY && thisChunk.locY < startY + yChunkCount)
-                    thisChunk.drawChangeCells(canvas);
-                else
-                    thisChunk.onlyUpdateMap();
-            }
+        const startY = ((-mapY / realPixelSize / chunkHeight | 0) - 1 + adjustY);
+        for (const chunk of needChange) {
+            if (chunk.locX >= startX && chunk.locX < startX + xChunkCount &&
+                chunk.locY >= startY && chunk.locY < startY + yChunkCount)
+                // worker.postMessage([thisChunk.drawChangeCells, canvas])
+                chunk.drawChangeCells(canvas);
         }
 
         calculateTeam();
-        updateMiniMap();
+        minMap.updateMiniMap();
 
         calculateTime.innerText = '每幀計算時間: ' + (window.performance.now() - timer) + 'ms';
         calculateCount.innerText = 'for迴圈次數: ' + count;
         timeCount.innerText = '' + ++worldTime;
-        count = 0;
     }
 
     //計算兩隊佔有量
     function calculateTeam() {
-        const all = (100 / (teamACount + teamBCount));
-        const teamAPer = all * teamACount;
-        const teamBPer = all * teamBCount;
+        const all = (100 / (teams[0] + teams[1]));
+        const teamAPer = all * teams[0];
+        const teamBPer = all * teams[1];
         teamA.style.width = teamAPer + '%';
         teamA.innerText = Math.round(teamAPer * 10) / 10 + '%';
         teamB.style.width = teamBPer + '%';
         teamB.innerText = Math.round(teamBPer * 10) / 10 + '%';
     }
-
 
     //計時器
     let interval;
@@ -250,10 +252,8 @@ window.onload = function () {
 
         if (failed)
             canvas.fillStyle = placeErrorColor;
-        else if (teamID === homeChunk.teamAID)
-            canvas.fillStyle = homeChunk.alivePixelA;
-        else if (teamID === homeChunk.teamBID)
-            canvas.fillStyle = homeChunk.alivePixelB;
+        else
+            canvas.fillStyle = colors[teamID];
 
         //畫範例
         for (let y = 0; y < objectHeight; y++) {
@@ -299,16 +299,16 @@ window.onload = function () {
                 if (model[y + 1][x] === 0)
                     continue;
 
-                let cx = (startX + 0.05) / realPixelSize / cWidth | 0;
-                let cy = (startY + 0.05) / realPixelSize / cWidth | 0;
+                let cx = (startX + 0.05) / realPixelSize / chunkWidth | 0;
+                let cy = (startY + 0.05) / realPixelSize / chunkWidth | 0;
                 if (startX < 0)
                     cx--;
                 if (startY < 0)
                     cy--;
 
                 //在chunk中的位置
-                let xInC = startX / realPixelSize - (cx * cWidth) | 0;
-                let yInC = startY / realPixelSize - (cy * cHeight) | 0;
+                let xInC = startX / realPixelSize - (cx * chunkWidth) | 0;
+                let yInC = startY / realPixelSize - (cy * chunkHeight) | 0;
 
                 if (lastCx !== cx || lastCy !== cy) {
                     chunk = chunks[cx];
@@ -320,17 +320,12 @@ window.onload = function () {
 
                 if (clear) {
                     if (chunk === undefined) {
-                        canvas.fillStyle = homeChunk.deadPixel;
+                        canvas.fillStyle = colors[0];
                     }
                     //chunk有在
                     else {
                         let teamID = chunk.chunkMap[xInC][yInC];
-                        if (teamID === homeChunk.teamAID)
-                            canvas.fillStyle = homeChunk.alivePixelA;
-                        else if (teamID === homeChunk.teamBID)
-                            canvas.fillStyle = homeChunk.alivePixelB;
-                        else
-                            canvas.fillStyle = homeChunk.deadPixel;
+                        canvas.fillStyle = colors[teamID];
                     }
                     canvas.fillRect(startX, startY, realPixelSize, realPixelSize);
 
@@ -369,7 +364,7 @@ window.onload = function () {
         startYsav += realPixelSize;
 
         if (screenScale > drawLineScreenScale) {
-            canvas.lineWidth = cGap;
+            canvas.lineWidth = cellGap;
             canvas.strokeStyle = strokeStyle;
             canvas.beginPath();
             const viewWidth = startXsav + modelWidth * realPixelSize;
@@ -469,8 +464,8 @@ window.onload = function () {
                 let x = (event.offsetX - mapX) / realPixelSize;
                 let y = (event.offsetY - mapY) / realPixelSize;
                 //計算chunk位置
-                let cx = x / cWidth | 0;
-                let cy = y / cHeight | 0;
+                let cx = x / chunkWidth | 0;
+                let cy = y / chunkHeight | 0;
                 if (x < 0)
                     cx--;
                 if (y < 0)
@@ -479,12 +474,12 @@ window.onload = function () {
                 const chunk = getChunk(cx, cy);
 
                 //chunk裡的x,y
-                let xInC = x - (cx * cWidth) | 0;
-                let yInC = y - (cy * cHeight) | 0;
+                let xInC = x - (cx * chunkWidth) | 0;
+                let yInC = y - (cy * chunkHeight) | 0;
                 if (chunk.chunkMap[xInC][yInC] > 0 && chunk.chunkMap[xInC][yInC] !== teamID) {
                     canvas.fillStyle = placeErrorColor;
-                    let chunkStartX = cx * realPixelSize * cWidth;
-                    let chunkStartY = cy * realPixelSize * cHeight;
+                    let chunkStartX = cx * realPixelSize * chunkWidth;
+                    let chunkStartY = cy * realPixelSize * chunkHeight;
                     canvas.fillRect(chunkStartX + xInC * realPixelSize, chunkStartY + yInC * realPixelSize, realPixelSize, realPixelSize);
                 } else {
                     chunk.addCells([[xInC, yInC]], canvas, teamID);
@@ -498,11 +493,10 @@ window.onload = function () {
         else if (selectModel) {
             drawExample(event.offsetX, event.offsetY, true);
         }
-        updateMiniMap(true);
+        minMap.updateMiniMap(true);
         drag = false;
     }
 
-    //移動
     playground.onmousemove = (event) => {
         //移動
         if (drag && !event.shiftKey) {
@@ -521,8 +515,19 @@ window.onload = function () {
         drag = false;
     }
 
-    let delta = 0.1;
+    function move(moveToX, moveToY) {
+        mapX += moveToX | 0;
+        mapY += moveToY | 0;
+        moveX += moveToX | 0;
+        moveY += moveToY | 0;
+        canvas.setTransform(1, 0, 0, 1, mapX, mapY);
+
+        locationView.innerText = '座標: ' + -(mapX / realPixelSize | 0) + ',' + (mapY / realPixelSize | 0);
+        refreshScreen();
+    }
+
     //縮放
+    let delta = 0.1;
     playground.onwheel = (event) => {
         const lastScreenScale = screenScale;
 
@@ -541,22 +546,21 @@ window.onload = function () {
             return
 
         // 計算沒放大前位置
-        realPixelSize = ((cPixSize * lastScreenScale) * 10 | 0) / 10;
+        realPixelSize = ((cellSize * lastScreenScale) * 10 | 0) / 10;
         let xLast = (event.offsetX - mapX) / realPixelSize;
         let yLast = (event.offsetY - mapY) / realPixelSize;
 
         //如果需要畫線，更改cell之間的寬
         if (screenScale > drawLineScreenScale) {
-            cGap = drawPixGap;
-            cPixSize = drawPixSize;
+            cellGap = cellWallGap;
             delta = 0.4;
         } else {
-            cGap = 0;
+            cellGap = 0;
             delta = 0.1;
         }
 
         // 計算沒放大後位置
-        realPixelSize = ((cPixSize * screenScale) * 10 | 0) / 10;
+        realPixelSize = ((cellSize * screenScale) * 10 | 0) / 10;
         let xNow = (event.offsetX - mapX) / realPixelSize;
         let yNow = (event.offsetY - mapY) / realPixelSize;
 
@@ -567,7 +571,6 @@ window.onload = function () {
         }
     }
 
-    //視窗重設
     function resizeScreen() {
         if (canvas.canvas.width !== gameWindow.offsetWidth || canvas.canvas.height !== gameWindow.offsetHeight) {
             canvas.canvas.width = gameWindow.offsetWidth;
@@ -583,17 +586,6 @@ window.onload = function () {
         // window.requestAnimationFrame(debug);
     }
 
-    function move(moveToX, moveToY) {
-        mapX += moveToX | 0;
-        mapY += moveToY | 0;
-        moveX += moveToX | 0;
-        moveY += moveToY | 0;
-        canvas.setTransform(1, 0, 0, 1, mapX, mapY);
-
-        locationView.innerText = '座標: ' + -(mapX / realPixelSize | 0) + ',' + (mapY / realPixelSize | 0);
-        refreshScreen();
-    }
-
     this.moveTo = (x, y) => {
         let moveToX = -x * realPixelSize - mapX;
         let moveToY = y * realPixelSize - mapY;
@@ -601,7 +593,7 @@ window.onload = function () {
     }
 
     function clear() {
-        canvas.fillStyle = homeChunk.deadPixel;
+        canvas.fillStyle = colors[0];
         canvas.fillRect(-canvas.canvas.width - mapX, -canvas.canvas.height - mapY, canvas.canvas.width * 2, canvas.canvas.height * 2);
     }
 
@@ -609,7 +601,7 @@ window.onload = function () {
     resizeScreen();
     calculateTeam();
     loadExample();
-    loadMiniMap(homeChunk);
+    minMap.updateMiniMap(true);
 
     function debug() {
         for (const i in chunks) {
@@ -617,16 +609,16 @@ window.onload = function () {
             for (const j in chunkX) {
                 const chunk = chunkX[j];
 
-                let chunkStartX = chunk.locX * realPixelSize * cWidth;
-                let chunkStartY = chunk.locY * realPixelSize * cHeight;
+                let chunkStartX = chunk.locX * realPixelSize * chunkWidth;
+                let chunkStartY = chunk.locY * realPixelSize * chunkHeight;
                 for (let i = 0; i < chunk.aliveLength; i++) {
                     const [x, y] = chunk.getAlivePixelPos(i);
                     if (x === -1) break;
                     let col = (chunk.cellData[x][y] + 1) / 7 * 255;
                     canvas.fillStyle = `rgb(0,${col},0)`;
-                    canvas.fillRect(chunkStartX + realPixelSize * x + cPixSize * screenScale / 4,
-                        chunkStartY + realPixelSize * y + cPixSize * screenScale / 4,
-                        cPixSize * screenScale / 2, cPixSize * screenScale / 2);
+                    canvas.fillRect(chunkStartX + realPixelSize * x + cellSize * screenScale / 4,
+                        chunkStartY + realPixelSize * y + cellSize * screenScale / 4,
+                        cellSize * screenScale / 2, cellSize * screenScale / 2);
                 }
                 canvas.font = '12px Arial';
 
@@ -636,8 +628,8 @@ window.onload = function () {
                 canvas.strokeStyle = 'blue';
                 canvas.rect(
                     chunkStartX, chunkStartY,
-                    realPixelSize * cWidth,
-                    realPixelSize * cHeight);
+                    realPixelSize * chunkWidth,
+                    realPixelSize * chunkHeight);
                 canvas.stroke();
 
                 canvas.textAlign = 'left';
@@ -649,11 +641,11 @@ window.onload = function () {
                 canvas.textAlign = 'center';
                 canvas.fillStyle = 'red';
                 // console.log(chunkStartX, chunkStartY)
-                for (let y = 0; y < cHeight; y++) {
-                    for (let x = 0; x < cWidth; x++) {
+                for (let y = 0; y < chunkHeight; y++) {
+                    for (let x = 0; x < chunkWidth; x++) {
                         if (chunk.cellData[x][y] > 0)
-                            canvas.fillText(chunk.cellData[x][y], chunkStartX + x * realPixelSize + cPixSize * screenScale / 2,
-                                chunkStartY + y * realPixelSize + cPixSize * screenScale / 2 + 5);
+                            canvas.fillText(chunk.cellData[x][y], chunkStartX + x * realPixelSize + cellSize * screenScale / 2,
+                                chunkStartY + y * realPixelSize + cellSize * screenScale / 2 + 5);
                     }
                 }
             }
