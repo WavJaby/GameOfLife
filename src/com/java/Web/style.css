@@ -1,12 +1,11 @@
 :root {
     --teamStatusSize: 15px;
-    --exampleWindowSize: 150px;
+    --templateWindowSize: 150px;
 }
 
 html, body {
     -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Safari */
-    -khtml-user-select: none; /* Konqueror HTML */
     -moz-user-select: none; /* Old versions of Firefox */
     -ms-user-select: none; /* Internet Explorer/Edge */
     user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
@@ -16,28 +15,50 @@ html, body {
     margin: 0;
 }
 
+div.disabled {
+    pointer-events: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 /*範例區*/
-#examples {
+#templates {
     float: right;
     overflow: auto;
     background-color: rgb(50, 50, 50);
 
-    width: var(--exampleWindowSize);
+    width: var(--templateWindowSize);
     height: 100%;
 }
 
-.exampleImage {
+.template {
     width: 80%;
     margin: 10%;
 }
 
-.exampleImage img {
+.template svg {
     width: 100%;
 }
 
-.exampleImage div {
+.template div {
     font-size: 100%;
     color: lightgray;
+}
+
+.templateDisplay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.templateDisplay > svg {
+    position: absolute;
+    opacity: 0.7;
 }
 
 /*遊戲區*/
@@ -45,25 +66,36 @@ html, body {
     overflow: hidden;
     float: left;
     cursor: crosshair;
+    position: relative;
 
-    width: calc(100% - var(--exampleWindowSize));
+    width: calc(100% - var(--templateWindowSize));
     height: calc(100% - var(--teamStatusSize));
 }
 
-#miniMap {
+/*miniMap*/
+.miniMap {
     position: absolute;
     left: 10px;
     bottom: 10px;
-    width: 100px;
-    height: 100px;
-    z-index: 1;
+    display: block;
+}
 
+.miniMap > canvas {
     border: solid 1px darkgray;
+    display: block;
+}
+
+.miniMap > .location {
+    background-color: rgba(0, 0, 0, 0.8);
+    display: block;
+
+    width: 100px;
+    color: limegreen;
 }
 
 /*team*/
 #teamState {
-    width: calc(100% - var(--exampleWindowSize));
+    width: calc(100% - var(--templateWindowSize));
     height: var(--teamStatusSize);
 }
 
@@ -85,45 +117,30 @@ html, body {
 
 
 /*UI*/
-/*button*/
 #start {
     position: fixed;
-    left: 10px;
-    top: 15px;
+    left: 1em;
+    top: 1em;
 }
 
 #next {
     position: fixed;
-    left: 70px;
-    top: 15px;
-}
-
-/*number*/
-.location {
-    position: absolute;
-    left: 10px;
-    bottom: 120px;
-
-    width: 100px;
-    background-color: rgba(0, 0, 0, 0.8);
-}
-
-#location {
-    color: limegreen;
+    left: 5em;
+    top: 1em;
 }
 
 #count {
     color: limegreen;
     position: fixed;
-    left: 10px;
-    top: 40px;
+    left: 1em;
+    top: 3em;
 }
 
 #calculateTime {
     color: limegreen;
     position: fixed;
     left: 140px;
-    top: 15px;
+    top: 10px;
 }
 
 #calculateCount {

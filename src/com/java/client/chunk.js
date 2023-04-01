@@ -48,8 +48,8 @@ class Chunk {
     }
 
     clear(canvas) {
-        let chunkStartX = this.locX * realPixelSize * this.chunkWidth;
-        let chunkStartY = this.locY * realPixelSize * this.chunkHeight;
+        let chunkStartX = this.x * realPixelSize * this.chunkWidth;
+        let chunkStartY = this.y * realPixelSize * this.chunkHeight;
 
         let thisPixSize = realPixelSize;
         if (screenScale > drawLineScreenScale) {
@@ -69,8 +69,8 @@ class Chunk {
     }
 
     updateCells(changeList, canvas, user) {
-        let chunkStartX = this.locX * realPixelSize * this.chunkWidth;
-        let chunkStartY = this.locY * realPixelSize * this.chunkHeight;
+        let chunkStartX = this.x * realPixelSize * this.chunkWidth;
+        let chunkStartY = this.y * realPixelSize * this.chunkHeight;
 
         this.count = 0;
 
@@ -111,8 +111,8 @@ class Chunk {
 
     //更新整個chunk
     drawChunk(canvas) {
-        let chunkStartX = this.locX * realPixelSize * this.chunkWidth;
-        let chunkStartY = this.locY * realPixelSize * this.chunkHeight;
+        let chunkStartX = this.x * realPixelSize * this.chunkWidth;
+        let chunkStartY = this.y * realPixelSize * this.chunkHeight;
 
         // for (const i of this.alivePixelList) {
         //     const team = this.chunkMap[i[0]][i[1]];
@@ -154,7 +154,7 @@ class Chunk {
             }
 
             if (this.alivePixelList.length === 0)
-                unloadChunk(this.locX, this.locY);
+                unloadChunk(this.x, this.y);
             this.lastDrawTime = worldTime;
             this.lastDrawScale = screenScale;
         }

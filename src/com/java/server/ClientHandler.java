@@ -18,7 +18,7 @@ public class ClientHandler implements Runnable {
     private final String LINE_END = "\r\n";
     private final String HANDSHAKE = "Upgrade: websocket" + LINE_END +
             "Connection: Upgrade" + LINE_END +
-            "Sec-WebSocket-Accept: {sha1}" + LINE_END + LINE_END;
+            "Sec-WebSocket-Accept: ";
 
     private Socket socket;
     private String id;
@@ -255,12 +255,10 @@ public class ClientHandler implements Runnable {
                 //make handshake
                 byte[] response = ("" +
                         "HTTP/1.1 101 Switching Protocols" + LINE_END +
-                        "Connection: Upgrade" + LINE_END +
-                        "Upgrade: websocket" + LINE_END +
-                        "Sec-WebSocket-Accept: " +
+                        HANDSHAKE +
                         //加密handshake key
                         Base64.getEncoder().encodeToString(encryptSHA1(match.group(1) + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11")) +
-                        LINE_END + LINE_END).getBytes("UTF-8");
+                        LINE_END + LINE_END).getBytes(StandardCharsets.UTF_8);
                 //write handshake
                 out.write(response, 0, response.length);
 
