@@ -5,11 +5,34 @@
  * @param calculateTeam
  * @param updateMiniMap
  */
-function stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
-    const colorIndexOffset = colors.length;
+function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
+    const frameWidth = 320, frameHeight = 240;
+    const videoFps = 25;
 
-    const stuffVideo = document.getElementById('stuffVideo');
     const stopButton = document.getElementById('stopIt');
+    const stuffVideo = document.getElementById('stuffVideo');
+    let playing = false;
+    this.play = function () {
+        if (!ready) return;
+        processFrame();
+        stuffVideo.play();
+        stopButton.style.display = 'block';
+        stopButton.textContent = 'pause';
+        stopButton.onclick = function () {
+            if (!ready) return;
+            if (stuffVideo.paused) {
+                stuffVideo.play();
+                stopButton.textContent = 'pause';
+            } else {
+                stuffVideo.pause();
+                stopButton.textContent = 'play';
+            }
+        }
+        playing = true;
+    };
+    this.playing = function () {
+        return playing;
+    };
 
     // Read palette
     const colorTable = {};
@@ -36,8 +59,12 @@ function stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
     };
     palette.src = 'web/stuff/palette.png';
 
-    const frameWidth = 320, frameHeight = 240;
-    const videoFps = 25;
+    // Read video
+    let ready = stuffVideo.readyState === stuffVideo.HAVE_ENOUGH_DATA;
+    stuffVideo.addEventListener('canplaythrough', function () {
+        ready = true;
+    }, {once: true});
+
     const frameCtx = document.createElement('canvas').getContext('2d', {willReadFrequently: true});
     frameCtx.canvas.width = frameWidth;
     frameCtx.canvas.height = frameHeight;
@@ -46,24 +73,6 @@ function stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
     const colorLookup = new Uint8Array(1 << 15);
     let lookupReady = false;
     let lastFrame = 0;
-    function start() {
-        processFrame();
-        calculateTeam();
-        stuffVideo.play();
-        stopButton.style.display = 'block';
-        stopButton.textContent = 'pause';
-        stopButton.onclick = function () {
-            if (stuffVideo.paused) {
-                stuffVideo.play();
-                stopButton.textContent = 'pause';
-            } else {
-                stuffVideo.pause();
-                stopButton.textContent = 'play';
-            }
-        }
-    }
-    if (stuffVideo.readyState === stuffVideo.HAVE_ENOUGH_DATA) start();
-    else stuffVideo.addEventListener('canplaythrough', start, {once: true});
 
     function buildColorLookup() {
         const table = Object.keys(colorTable).map(i => [i >> 16, (i >> 8) & 0xFF, i & 0xFF, colorTable[i]]);
@@ -127,7 +136,7 @@ function stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
             lastFrame = frameNum + 1;
         }
         requestAnimationFrame(processFrame);
-        // setTimeout(processFrame, 1000);
+        // setTimeout(processFrame, 100);
     }
 
     function blobToImage(blob) {
