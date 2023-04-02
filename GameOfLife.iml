@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="JsonParser" level="project" />
+    <orderEntry type="library" name="omggif" level="application" />
   </component>
 </module>

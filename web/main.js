@@ -8,15 +8,11 @@ const screenMinScale = 1;
 const drawLineScreenScale = 15;
 const strokeStyle = 'rgb(54, 54, 54)';
 const placeErrorColor = 'rgb(255, 0, 0)';
-const cellStateColors = [
-    new Color(10, 10, 10),
-    new Color(0, 200, 200),
-    new Color(200, 200, 200)
-]
+const cellStateColors = [new Color(10, 10, 10)];
 const teamID = 1;
 
 function Main() {
-    const world = {x: 0, y: 0, scale: 15};
+    const world = {x: 0, y: 0, scale: 5};
     const chunkManager = new ChunkManager(world);
     // main canvas
     const gameWindow = document.getElementById('gamePage');
@@ -33,8 +29,8 @@ function Main() {
     gameWindow.appendChild(templateManager.templateDisplayElement);
 
     // team bar
-    const teamA = document.getElementById('teamA');
-    const teamB = document.getElementById('teamB');
+    const teamState = document.getElementById('teamState');
+    const teamStateElements = [];
     // control UI
     const startButton = document.getElementById('start');
     const nextButton = document.getElementById('next');
@@ -52,9 +48,13 @@ function Main() {
     let startMoveX, startMoveY, startMoveWorldX, startMoveWorldY, startMoveTime;
 
     /** init */
+    chunkManager.addTeam([0, 0]);
+    cellStateColors.push(
+        new Color(0, 200, 200),
+        new Color(200, 200, 200)
+    );
+    stuff(chunkManager, canvas, cellStateColors, calculateTeam, minMap.updateMiniMap);
     gameWindow.style.backgroundColor = cellStateColors[0].toString();
-    teamA.style.backgroundColor = cellStateColors[1].toString();
-    teamB.style.backgroundColor = cellStateColors[2].toString();
 
     if (1) {
         chunkManager.getChunk(0, 0).addCells([
@@ -120,19 +120,26 @@ function Main() {
     }
 
     function calculateTeam() {
-        const total = (chunkManager.teamCount[0] + chunkManager.teamCount[1]);
-        let teamAPer, teamBPer;
-        if (total === 0)
-            teamAPer = teamBPer = 50;
-        else {
-            const all = 100 / total;
-            teamAPer = all * chunkManager.teamCount[0];
-            teamBPer = all * chunkManager.teamCount[1];
+        if (teamStateElements.length !== chunkManager.getTeamLength()) {
+            for (let i = teamStateElements.length; i < chunkManager.getTeamLength(); i++) {
+                const ele = document.createElement('div');
+                ele.style.background = cellStateColors[i + 1].toString();
+                teamStateElements.push(ele);
+                teamState.appendChild(ele);
+            }
         }
-        teamA.style.width = teamAPer + '%';
-        teamA.innerText = Math.round(teamAPer * 10) / 10 + '%';
-        teamB.style.width = teamBPer + '%';
-        teamB.innerText = Math.round(teamBPer * 10) / 10 + '%';
+        const total = chunkManager.getTotalTeamCount();
+        let i = 0;
+        for (const ele of teamStateElements) {
+            const teamPer = chunkManager.teamCount[i++] / total * 100;
+            ele.style.width = teamPer + '%';
+            ele.teamPer = teamPer;
+            if (teamPer > 3)
+                ele.innerText = Math.round(teamPer * 10) / 10 + '%';
+            else
+                ele.innerText = '';
+        }
+        teamState.append(...teamStateElements.sort((i, j) => j.teamPer - i.teamPer));
     }
 
     function renderAllChunks() {

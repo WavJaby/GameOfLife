@@ -6,6 +6,7 @@
  * @param chunkWidth
  * @param chunkHeight
  * @param worldTime
+ * @param world
  * @param {ChunkManager} chunkManager
  * @constructor
  */
@@ -99,7 +100,9 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManag
         }
 
         for (const i of changeList) {
+            const orgState = chunkMap[i[0]][i[1]];
             const state = i[2];
+            if (orgState === state) continue;
             chunkCanvas.fillStyle = canvas.fillStyle = cellStateColors[state].toString();
 
             chunkCanvas.fillRect(i[0], i[1], 1, 1);
@@ -108,15 +111,22 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManag
             // 告訴鄰居
             // x, y
             if (state === 0) {
-                teamsCount[0]--;
-                this.teamsCount[0]--;
-                chunkMap[i[0]][i[1]] = 0;
-                calculateCellData(i[0], i[1], false);
+                if (orgState > 0) {
+                    teamsCount[orgState - 1]--;
+                    this.teamsCount[orgState - 1]--;
+                    chunkMap[i[0]][i[1]] = 0;
+                    calculateCellData(i[0], i[1], false);
+                }
             } else {
+                if (orgState > 0) {
+                    teamsCount[orgState - 1]--;
+                    this.teamsCount[orgState - 1]--;
+                }
                 teamsCount[state - 1]++;
                 this.teamsCount[state - 1]++;
                 chunkMap[i[0]][i[1]] = state;
-                calculateCellData(i[0], i[1], true);
+                if (orgState === 0)
+                    calculateCellData(i[0], i[1], true);
             }
             addActiveCell(i[0], i[1]);
         }

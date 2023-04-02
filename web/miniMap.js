@@ -1,10 +1,10 @@
 /**
- * @param {Color[]} teamColors
+ * @param {Color[]} cellStateColors
  * @param world
  * @param {ChunkManager} chunkManager
  * @constructor
  */
-function MiniMap(teamColors, world, chunkManager) {
+function MiniMap(cellStateColors, world, chunkManager) {
     this.miniMapElement = document.createElement('div');
     this.miniMapElement.className = 'miniMap';
     // Canvas
@@ -75,7 +75,7 @@ function MiniMap(teamColors, world, chunkManager) {
 
     function refreshMiniMap() {
         // fill background
-        canvas.fillStyle = teamColors[0].toString();
+        canvas.fillStyle = cellStateColors[0].toString();
         canvas.fillRect(0, 0, miniMapWidth, miniMapHeight);
 
         const chunkCountX = miniMapWidth / mapScale;
@@ -83,21 +83,22 @@ function MiniMap(teamColors, world, chunkManager) {
         const chunkStartX = (chunkX - chunkCountX / 2 + chunkXC / 2) | 0;
         const chunkStartY = (chunkY - chunkCountY / 2 + chunkYC / 2) | 0;
         for (const chunk of chunkManager.getChunkRange(chunkStartX, chunkStartY, chunkCountX, chunkCountY)) {
-            const teamAc = chunk.teamsCount[0];
-            const teamBc = chunk.teamsCount[1];
-
-            let scale, color;
-            if (teamAc > threshold && teamAc > teamBc) {
-                scale = (teamAc + 20) / maxPixNum;
-                color = teamColors[1];
-            } else if (teamBc > threshold && teamBc > teamAc) {
-                scale = (teamBc + 20) / maxPixNum;
-                color = teamColors[2];
-            } else
-                continue;
+            // const total = chunk.teamsCount.reduce((a, b) => a + b, 0);
+            let color = cellStateColors[0];
+            let max = 0;
+            for (let i = 0; i < chunk.teamsCount.length; i++) {
+                if (chunk.teamsCount[i] > max) {
+                    max = chunk.teamsCount[i];
+                    color = cellStateColors[i];
+                }
+            }
+            let scale = (max + 20) / maxPixNum;
             if (scale > 1)
                 scale = 1;
-            canvas.fillStyle = 'rgb(' + color.r * scale + ',' + color.g * scale + ',' + color.b * scale + ')';
+            if (color instanceof Color)
+                canvas.fillStyle = 'rgb(' + color.r * scale + ',' + color.g * scale + ',' + color.b * scale + ')';
+            else
+                canvas.fillStyle = color.toString();
             canvas.fillRect((chunk.x - chunkStartX) * mapScale, (chunk.y - chunkStartY) * mapScale, mapScale, mapScale);
         }
 
