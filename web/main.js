@@ -53,7 +53,7 @@ function Main() {
         new Color(0, 200, 200),
         new Color(200, 200, 200)
     );
-    stuff(chunkManager, canvas, cellStateColors, calculateTeam, minMap.updateMiniMap);
+    const stuff = new Stuff(chunkManager, canvas, cellStateColors, calculateTeam, minMap.updateMiniMap);
     gameWindow.style.backgroundColor = cellStateColors[0].toString();
 
     if (1) {
@@ -139,7 +139,10 @@ function Main() {
             else
                 ele.innerText = '';
         }
-        teamState.append(...teamStateElements.sort((i, j) => j.teamPer - i.teamPer));
+        const sorted = [];
+        Array.prototype.push.apply(sorted, teamStateElements);
+        sorted.sort((i, j) => j.teamPer - i.teamPer);
+        teamState.append(...sorted);
     }
 
     function renderAllChunks() {
@@ -190,6 +193,10 @@ function Main() {
 
     /** listener */
     startButton.onclick = function () {
+        if (!stuff.playing()) {
+            stuff.play();
+            return;
+        }
         if (!simulateInterval) {
             startButton.innerText = 'stop';
             simulateInterval = setInterval(calculateAllChunks, 10);
