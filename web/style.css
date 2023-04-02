@@ -1,5 +1,5 @@
 :root {
-    --teamStatusSize: 15px;
+    --teamStatusSize: 20px;
     --templateWindowSize: 150px;
 }
 
@@ -100,21 +100,15 @@ div.disabled {
 }
 
 #teamState div {
+    color: white;
+    height: 100%;
+
+    padding: 2px 0;
+    box-sizing: border-box;
     float: left;
     font-size: 5px;
-
-    width: 50%;
-    height: 100%;
+    text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 }
-
-#teamA {
-    text-align: right;
-}
-
-#teamB {
-    text-align: left;
-}
-
 
 /*UI*/
 #start {

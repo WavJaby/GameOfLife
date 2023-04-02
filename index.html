@@ -6,20 +6,31 @@
     <link rel="stylesheet" href="web/style.css">
     <script src="web/color.js"></script>
 
+    <script src="web/main.js"></script>
+    <script src="web/stuff/omggif.js"></script>
+    <script src="web/stuff/stuff.js"></script>
+
     <script src="web/chunk.js"></script>
     <script src="web/chunkManager.js"></script>
-    <script src="web/main.js"></script>
-
     <script src="web/templateManager.js"></script>
     <script src="web/templateModels.js"></script>
     <script src="web/miniMap.js"></script>
 </head>
 <body>
+
+<div style="display: none">
+    <audio id="stuffAudio" src="web/stuff/stuff.mp3"></audio>
+</div>
+<!--<video id="v" style="display: none" loop>-->
+<!--    <source src="web/stuff/output.mp4" type="video/mp4">-->
+<!--</video>-->
+
 <div id="templates"></div>
 
 <div id="gamePage">
     <button id="start">start</button>
     <button id="next">next</button>
+    <button style="position:absolute;right:0;display:none" id="stopIt"></button>
 
     <span id="calculateCount">for迴圈次數: 0</span>
     <span id="calculateTime">每幀計算時間: 0ms</span>
@@ -27,9 +38,6 @@
     <span id="count">0</span>
 </div>
 
-<div id="teamState">
-    <div id="teamA">50%</div>
-    <div id="teamB">50%</div>
-</div>
+<div id="teamState"></div>
 </body>
 </html>

@@ -11,8 +11,13 @@ function ChunkManager(world) {
     const chunks = {};
     let worldTime = 0;
     this.calculateCount = 0;
-    this.teamCount = [0, 0];
+    this.teamCount = [];
 
+    /**
+     * @param {int} x
+     * @param {int} y
+     * @return {Chunk}
+     */
     this.getChunk = function (x, y) {
         let chunk = chunks[x];
         if (chunk === undefined)
@@ -156,5 +161,17 @@ function ChunkManager(world) {
      */
     this.getChunks = function () {
         return chunks;
+    }
+
+    this.addTeam = function (teams) {
+        Array.prototype.push.apply(this.teamCount, teams);
+    }
+
+    this.getTeamLength = function () {
+        return this.teamCount.length;
+    }
+
+    this.getTotalTeamCount = function () {
+        return this.teamCount.reduce((a, b) => a + b, 0);
     }
 }
