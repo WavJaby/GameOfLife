@@ -194,6 +194,10 @@ function Main() {
     /** listener */
     startButton.onclick = function () {
         if (!stuff.playing()) {
+            world.x = 0;
+            world.y = 0;
+            world.scale = 5;
+            updateLocation();
             stuff.play();
             return;
         }
