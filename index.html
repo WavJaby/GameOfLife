@@ -3,13 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <title>Game Of life</title>
+    <link rel="icon" href="web/icon/icon.svg">
     <link rel="stylesheet" href="web/style.css">
     <script src="web/color.js"></script>
 
+    <!-- Meta -->
+    <meta property="og:title" content="Conway's Game of Life"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content="https://wavjaby.github.io/GameOfLife"/>
+    <meta property="og:image" content="https://wavjaby.github.io/GameOfLife/web/icon/icon.svg"/>
+    <meta property="og:description" content="Play Conway's Game of Life"/>
+    <meta name="theme-color" content="#7CFC00">
+    <!-- Include this to make the og:image larger -->
+    <meta name="twitter:card" content="summary_large_image">
+
+
+    <!-- Main script -->
     <script src="web/main.js"></script>
+
+    <!-- Some stuff -->
     <script src="web/stuff/omggif.js"></script>
     <script src="web/stuff/stuff.js"></script>
 
+    <!-- Modules -->
     <script src="web/chunk.js"></script>
     <script src="web/chunkManager.js"></script>
     <script src="web/templateManager.js"></script>
@@ -20,24 +36,12 @@
 
 <div style="display: none">
     <audio id="stuffAudio" src="web/stuff/stuff.mp3"></audio>
+    <!--<video id="v" style="display: none" loop>-->
+    <!--    <source src="web/stuff/output.mp4" type="video/mp4">-->
+    <!--</video>-->
 </div>
-<!--<video id="v" style="display: none" loop>-->
-<!--    <source src="web/stuff/output.mp4" type="video/mp4">-->
-<!--</video>-->
-
 <div id="templates"></div>
-
-<div id="gamePage">
-    <button id="start">start</button>
-    <button id="next">next</button>
-    <button style="position:absolute;right:0;display:none" id="stopIt"></button>
-
-    <span id="calculateCount">for迴圈次數: 0</span>
-    <span id="calculateTime">每幀計算時間: 0ms</span>
-
-    <span id="count">0</span>
-</div>
-
+<div id="gamePage"></div>
 <div id="teamState"></div>
 </body>
 </html>
