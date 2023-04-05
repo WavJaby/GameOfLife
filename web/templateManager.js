@@ -14,7 +14,7 @@ function TemplateManager(chunkManager, world) {
     let templateRotate = 0;
 
     this.loadTemplate = function () {
-        const templateWindow = document.getElementById("templates");
+        const templateWindow = document.getElementById('templates');
 
         for (const i in TemplateModels) {
             const modelData = TemplateModels[i];
@@ -24,7 +24,7 @@ function TemplateManager(chunkManager, world) {
             // const svgHeight = (modelHeight * svgWidth / modelWidth) | 0;
             const svgWidth = modelWidth;
             const svgHeight = modelHeight;
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
             svg.setAttribute('fill', '#00FF32');
 
@@ -33,7 +33,7 @@ function TemplateManager(chunkManager, world) {
             for (let y = 0; y < modelHeight; y++) {
                 for (let x = 0; x < modelWidth; x++) {
                     if (modelData[y + 1][x] !== 0) {
-                        const rect = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+                        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                         rect.setAttribute('x', (x * pixSize).toString());
                         rect.setAttribute('y', (y * pixSize).toString());
                         rect.setAttribute('width', (pixSize - gap).toString());
@@ -60,12 +60,12 @@ function TemplateManager(chunkManager, world) {
                 selectTemplateData = modelData.slice(1, modelHeight + 1);
 
                 setTeamColor();
-                this.updateLocation(event);
+                this.updateLocation(event.clientX, event.clientY);
 
                 if (lastTemplate) {
                     lastTemplate.style.transform = null;
                     templateDisplay.replaceChild(selectTemplate, lastTemplate);
-                }else
+                } else
                     templateDisplay.appendChild(selectTemplate);
             };
             template.appendChild(svg);
@@ -79,10 +79,10 @@ function TemplateManager(chunkManager, world) {
     }
 
     function setTeamColor() {
-        selectTemplate.setAttribute("fill", cellStateColors[teamID + 1].toString());
+        selectTemplate.setAttribute('fill', cellStateColors[teamID + 1].toString());
     }
 
-    this.updateLocation = function (event) {
+    this.updateLocation = function (clientX, clientY) {
         if (selectTemplate === null) return;
         let modelWidth, modelHeight, ratioOffset;
         if (templateRotate % 2 === 0) {
@@ -99,8 +99,8 @@ function TemplateManager(chunkManager, world) {
         const worldY = (world.y + 0.5) | 0;
         const centerOffX = modelWidth / 2 - 0.5;
         const centerOffY = modelHeight / 2 - 0.5;
-        const x = (event.clientX - worldX) / world.scale - centerOffX - ratioOffset;
-        const y = (event.clientY - worldY) / world.scale - centerOffY + ratioOffset;
+        const x = (clientX - worldX) / world.scale - centerOffX - ratioOffset;
+        const y = (clientY - worldY) / world.scale - centerOffY + ratioOffset;
         selectTemplate.style.left = (worldX + ((x - (x < 0) | 0) + ratioOffset) * world.scale) + 'px';
         selectTemplate.style.top = (worldY + ((y - (y < 0) | 0) - ratioOffset) * world.scale) + 'px';
         selectTemplate.setAttribute('width', (modelWidth * world.scale).toString());
@@ -148,26 +148,29 @@ function TemplateManager(chunkManager, world) {
         selectTemplate.style.transform = `rotate(${templateRotate * 90}deg) scale(${templateFlip ? -1 : 1},1)`;
     }
 
-    this.checkPlaceTemplate = function (event) {
+    /**
+     * @param clientX
+     * @param clientY
+     * @return {Map<int, Map<int, []>>|null}
+     */
+    this.checkPlaceTemplate = function (clientX, clientY) {
         const modelWidth = selectTemplateData[0].length;
         const modelHeight = selectTemplateData.length;
         const worldX = (world.x + 0.5) | 0;
         const worldY = (world.y + 0.5) | 0;
         const centerOffX = modelWidth / 2 - 0.5;
         const centerOffY = modelHeight / 2 - 0.5;
-        const offsetX = (event.offsetX - worldX) / world.scale - centerOffX;
-        const offsetY = (event.offsetY - worldY) / world.scale - centerOffY;
-        const startX = (offsetX - (offsetX < 0)) | 0;
-        const startY = (offsetY - (offsetY < 0)) | 0;
+        const startRawX = (clientX - worldX) / world.scale - centerOffX;
+        const startRawY = (clientY - worldY) / world.scale - centerOffY;
+        const startX = (startRawX - (startRawX < 0)) | 0;
+        const startY = (startRawY - (startRawY < 0)) | 0;
         // console.log(startX, startY);
 
-        const change = {};
-        if (chunkManager.checkRangeAlive(startX, startY, modelWidth, modelHeight, change, selectTemplateData)) {
-            selectTemplate.setAttribute("fill", placeErrorColor.toString());
+        const change = chunkManager.checkRangeAlive(startX, startY, modelWidth, modelHeight, selectTemplateData);
+        if (change === null) {
+            selectTemplate.setAttribute('fill', placeErrorColor.toString());
             setTimeout(setTeamColor, 200);
-            return null;
         }
-
         return change;
     }
 

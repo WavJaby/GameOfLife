@@ -87,9 +87,7 @@ div.disabled {
 
 .miniMap > .location {
     background-color: rgba(0, 0, 0, 0.8);
-    display: block;
-
-    width: 100px;
+    padding: 0 2px;
     color: limegreen;
 }
 
@@ -102,48 +100,67 @@ div.disabled {
 #teamState div {
     color: white;
     height: 100%;
+    line-height: 100%;
 
-    padding: 2px 0;
     box-sizing: border-box;
     float: left;
-    font-size: 5px;
+    font-size: 100%;
     text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 }
 
 /*UI*/
-#start {
-    position: fixed;
-    left: 1em;
-    top: 1em;
+.controls {
+    background: #050505a0;
+    width: 100%;
+    height: 35px;
+    position: absolute;
+    top: 0;
 }
 
-#next {
-    position: fixed;
-    left: 5em;
-    top: 1em;
+.controls > button {
+    background: gray;
+    height: 100%;
+    border: none;
+    padding: 0 5px;
+    display: inline-block;
+    opacity: 0.5;
 }
 
-#count {
+.controls > button:hover {
+    background: dimgray;
+}
+
+.controls > button:active {
+    background: darkgray;
+}
+
+.controls:hover > button {
+    opacity: 1;
+}
+
+.controls > button > img {
+    display: block;
+}
+
+.controls > p,
+.detailWindow > p {
     color: limegreen;
-    position: fixed;
-    left: 1em;
-    top: 3em;
+    margin: 0 5px;
+    vertical-align: top;
 }
 
-#calculateTime {
-    color: limegreen;
-    position: fixed;
-    left: 140px;
-    top: 10px;
+.controls > p {
+    display: inline-block;
+    font-size: 20px;
+    line-height: 35px;
 }
 
-#calculateCount {
-    color: limegreen;
-    position: fixed;
-    left: 140px;
-    top: 40px;
+.detailWindow > p {
+    font-size: 16px;
 }
 
-h4 {
-    margin: 0;
+.detailWindow {
+    position: absolute;
+    right: 0;
+    top: 0;
 }

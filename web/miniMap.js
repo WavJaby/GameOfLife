@@ -56,13 +56,13 @@ function MiniMap(cellStateColors, world, chunkManager) {
             miniMapRefreshTime++;
     }
 
-    this.updateLocationText = function (event) {
-        if (!event)
-            locationView.innerText = '座標: 0,0';
+    this.updateLocationText = function (clientX, clientY) {
+        if (!clientX)
+            locationView.innerText = '(0,0)';
         else {
-            const x = (event.clientX - world.x) / world.scale;
-            const y = (event.clientY - world.y) / world.scale;
-            locationView.innerText = '座標: ' + (x - (x < 0) | 0) + ',' + (y - (y < 0) | 0);
+            const x = (clientX - world.x) / world.scale;
+            const y = (clientY - world.y) / world.scale;
+            locationView.innerText = '(' + (x - (x < 0) | 0) + ',' + (y - (y < 0) | 0) + ')';
         }
     }
 
@@ -89,7 +89,7 @@ function MiniMap(cellStateColors, world, chunkManager) {
             for (let i = 0; i < chunk.teamsCount.length; i++) {
                 if (chunk.teamsCount[i] > max) {
                     max = chunk.teamsCount[i];
-                    color = cellStateColors[i];
+                    color = cellStateColors[i + 1];
                 }
             }
             let scale = (max + 20) / maxPixNum;

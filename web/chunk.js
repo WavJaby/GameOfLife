@@ -5,13 +5,14 @@
  * @param locY
  * @param chunkWidth
  * @param chunkHeight
- * @param worldTime
+ * @param generationCount
  * @param world
  * @param {ChunkManager} chunkManager
  * @constructor
  */
-function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManager) {
+function Chunk(locX, locY, chunkWidth, chunkHeight, generationCount, world, chunkManager) {
     const thisInstance = this;
+    const mainCanvas = world.mainCanvas;
     const canvasElement = document.createElement('canvas');
     const chunkCanvas = canvasElement.getContext('2d');
     canvasElement.width = chunkWidth;
@@ -32,7 +33,7 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManag
     this.cellDataCount = 0;
     this.x = locX;
     this.y = locY;
-    let chunkTime = worldTime;
+    let chunkTime = generationCount;
     let thisCount = 0;
 
     for (let x = 0; x < chunkWidth; x++) {
@@ -42,7 +43,7 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManag
 
 
     //user改變cells
-    this.addCells = function (changeList, canvas, teamID) {
+    this.addCells = function (changeList, teamID) {
         const worldX = (world.x + 0.5) | 0;
         const worldY = (world.y + 0.5) | 0;
         const chunkStartX = locX * world.scale * chunkWidth + worldX;
@@ -60,12 +61,12 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManag
         for (const i of changeList) {
             const state = chunkMap[i[0]][i[1]];
             if (state === 0)
-                chunkCanvas.fillStyle = canvas.fillStyle = cellStateColors[teamID + 1].toString();
+                chunkCanvas.fillStyle = mainCanvas.fillStyle = cellStateColors[teamID + 1].toString();
             else
-                chunkCanvas.fillStyle = canvas.fillStyle = cellStateColors[0].toString();
+                chunkCanvas.fillStyle = mainCanvas.fillStyle = cellStateColors[0].toString();
 
             chunkCanvas.fillRect(i[0], i[1], 1, 1);
-            canvas.fillRect((chunkStartX + world.scale * i[0] + offset) | 0, (chunkStartY + world.scale * i[1] + offset) | 0, size, size);
+            mainCanvas.fillRect((chunkStartX + world.scale * i[0] + offset) | 0, (chunkStartY + world.scale * i[1] + offset) | 0, size, size);
 
             // 告訴鄰居
             // x, y
@@ -84,7 +85,7 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManag
         }
     }
 
-    this.setCellsColor = function (changeList, canvas) {
+    this.setCellsColor = function (changeList) {
         const worldX = (world.x + 0.5) | 0;
         const worldY = (world.y + 0.5) | 0;
         const chunkStartX = locX * world.scale * chunkWidth + worldX;
@@ -103,10 +104,10 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManag
             const orgState = chunkMap[i[0]][i[1]];
             const state = i[2];
             if (orgState === state) continue;
-            chunkCanvas.fillStyle = canvas.fillStyle = cellStateColors[state].toString();
+            chunkCanvas.fillStyle = mainCanvas.fillStyle = cellStateColors[state].toString();
 
             chunkCanvas.fillRect(i[0], i[1], 1, 1);
-            canvas.fillRect((chunkStartX + world.scale * i[0] + offset) | 0, (chunkStartY + world.scale * i[1] + offset) | 0, size, size);
+            mainCanvas.fillRect((chunkStartX + world.scale * i[0] + offset) | 0, (chunkStartY + world.scale * i[1] + offset) | 0, size, size);
 
             // 告訴鄰居
             // x, y
@@ -150,7 +151,7 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManag
         return activeCellList.filter((v, i) => i < activeLength).map(loc => [loc % chunkWidth, loc / chunkWidth | 0]);
     }
 
-    this.calculateChange = function (worldTime) {
+    this.calculateChange = function (generationCount) {
         changeList.length = 0;
 
         if (thisInstance.cellDataCount === 0) {
@@ -199,8 +200,8 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManag
         thisCount += activeLength;
 
         // Nothing to change, update chunk time to world time
-        if (changeList.length === 0 && chunkTime + 1 === worldTime)
-            chunkTime = worldTime;
+        if (changeList.length === 0 && chunkTime + 1 === generationCount)
+            chunkTime = generationCount;
 
         return changeList.length > 0;
     }
@@ -226,7 +227,7 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManag
         thisCount += changeList.length;
     }
 
-    this.renderChange = function (render, worldTime, canvas) {
+    this.renderChange = function (render, generationCount) {
         const worldX = (world.x + 0.5) | 0;
         const worldY = (world.y + 0.5) | 0;
         const chunkStartX = locX * world.scale * chunkWidth + worldX;
@@ -244,13 +245,13 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManag
         for (const i of changeList) {
             const team = chunkMap[i[0]][i[1]] = i[2];
             if (render) {
-                chunkCanvas.fillStyle = canvas.fillStyle = cellStateColors[team].toString();
-                canvas.fillRect((chunkStartX + world.scale * i[0] + offset) | 0, (chunkStartY + world.scale * i[1] + offset) | 0, size, size);
+                chunkCanvas.fillStyle = mainCanvas.fillStyle = cellStateColors[team].toString();
+                mainCanvas.fillRect((chunkStartX + world.scale * i[0] + offset) | 0, (chunkStartY + world.scale * i[1] + offset) | 0, size, size);
                 chunkCanvas.fillRect(i[0], i[1], 1, 1);
             }
         }
-        if (render && chunkTime + 1 === worldTime)
-            chunkTime = worldTime;
+        if (render && chunkTime + 1 === generationCount)
+            chunkTime = generationCount;
     }
 
     /**
@@ -376,14 +377,15 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManag
     }
 
     //更新整個chunk
-    this.drawChunk = function (worldTime, canvas) {
+    this.drawChunk = function (generationCount, buffFrame) {
         const chunkStartX = locX * world.scale * chunkWidth + (world.x + 0.5 | 0);
         const chunkStartY = locY * world.scale * chunkHeight + (world.y + 0.5 | 0);
         const realChunkWidth = ((chunkWidth * world.scale * 100) | 0) / 100;
         const realChunkHeight = ((chunkHeight * world.scale * 100) | 0) / 100;
 
-        if (chunkTime !== worldTime) {
-            chunkTime = worldTime;
+        if (chunkTime !== generationCount) {
+            // console.log('render');
+            chunkTime = generationCount;
             chunkCanvas.clearRect(0, 0, chunkWidth, chunkHeight);
             for (let i = 0; i < chunkWidth; i++) {
                 for (let j = 0; j < chunkHeight; j++) {
@@ -395,7 +397,7 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, worldTime, world, chunkManag
                 }
             }
         }
-        canvas.drawImage(canvasElement, chunkStartX, chunkStartY, realChunkWidth, realChunkHeight);
+        buffFrame.drawImage(canvasElement, chunkStartX, chunkStartY, realChunkWidth, realChunkHeight);
     }
 
     this.getCount = function () {

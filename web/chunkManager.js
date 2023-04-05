@@ -9,7 +9,7 @@ function ChunkManager(world) {
 
     /**@type{{Chunk}}*/
     const chunks = {};
-    let worldTime = 0;
+    let generationCount = 0;
     this.calculateCount = 0;
     this.teamCount = [];
 
@@ -35,8 +35,7 @@ function ChunkManager(world) {
     }
 
     function loadChunk(x, y) {
-        worldTime++;
-        const chunk = new Chunk(x, y, chunkWidth, chunkHeight, worldTime, world, thisInst);
+        const chunk = new Chunk(x, y, chunkWidth, chunkHeight, generationCount, world, thisInst);
         let cx = chunks[x];
         if (cx === undefined)
             cx = chunks[x] = {};
@@ -48,13 +47,14 @@ function ChunkManager(world) {
      * @return {Chunk[]}
      */
     this.calculateGeneration = function () {
+        generationCount++;
         const needChange = [];
         //calculate all chunk
         for (const i in chunks) {
             const cx = chunks[i];
             for (const j in cx) {
                 const chunk = cx[j];
-                if (chunk.calculateChange(worldTime))
+                if (chunk.calculateChange(generationCount))
                     needChange.push(chunk);
             }
         }
@@ -65,7 +65,7 @@ function ChunkManager(world) {
         return needChange;
     }
 
-    this.renderChunksInRange = function (startX, startY, xChunkCount, yChunkCount, canvas) {
+    this.renderChunksInRange = function (startX, startY, xChunkCount, yChunkCount, buffFrame) {
         for (let x = 0; x < xChunkCount; x++) {
             //計算chunk位置X
             const cx = chunks[startX + x | 0];
@@ -74,7 +74,7 @@ function ChunkManager(world) {
                 //計算chunk位置Y
                 const cy = cx[startY + y | 0];
                 if (cy !== undefined)
-                    cy.drawChunk(worldTime, canvas);
+                    cy.drawChunk(generationCount, buffFrame);
             }
         }
     }
@@ -105,12 +105,12 @@ function ChunkManager(world) {
      * @param {int} startY
      * @param {int} width
      * @param {int} height
-     * @param {{}} change
      * @param {int[][]} templateData
-     * @return {boolean}
+     * @return {Map<int, Map<int, []>>|null}
      */
-    this.checkRangeAlive = function (startX, startY, width, height, change, templateData) {
+    this.checkRangeAlive = function (startX, startY, width, height, templateData) {
         let chunk = undefined, lastChunkX = null, lastChunkY = null;
+        const change = {};
 
         for (let i = 0; i < height; i++) {
             for (let j = 0; j < width; j++) {
@@ -134,7 +134,7 @@ function ChunkManager(world) {
 
                 if (chunk !== undefined) {
                     if (chunk.cellData[cellX][cellY] > 0)
-                        return true;
+                        return null;
                 }
 
                 let changeChunkX, changeChunkY;
@@ -146,14 +146,14 @@ function ChunkManager(world) {
                 changeChunkY.push([cellX, cellY]);
             }
         }
-        return false;
+        return change;
     };
 
     /**
      * @return {number}
      */
-    this.getTime = function () {
-        return worldTime;
+    this.getGenerationCount = function () {
+        return generationCount;
     }
 
     /**

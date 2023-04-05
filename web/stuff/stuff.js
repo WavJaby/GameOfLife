@@ -1,11 +1,10 @@
 /**
  * @param {ChunkManager} chunkManager
- * @param mainCanvas
- * @param colors
+ * @param {Color[]} colors
  * @param calculateTeam
  * @param updateMiniMap
  */
-function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
+function Stuff(chunkManager, colors, calculateTeam, updateMiniMap) {
     const frameWidth = 320, frameHeight = 240;
     const videoFps = 25;
 
@@ -13,7 +12,10 @@ function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
     const stuffVideo = document.getElementById('stuffVideo');
     let playing = false;
     this.play = function () {
-        if (!ready) return;
+        if (!ready) return false;
+        if (playing) return true;
+        playing = true;
+
         processFrame();
         stuffVideo.play();
         stopButton.style.display = 'block';
@@ -28,10 +30,8 @@ function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
                 stopButton.textContent = 'play';
             }
         }
-        playing = true;
-    };
-    this.playing = function () {
-        return playing;
+
+        return true;
     };
 
     // Read palette
@@ -50,7 +50,7 @@ function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
             const color = (r << 16) | (g << 8) | b;
             if (colorTable[color] === undefined) {
                 colorTable[color] = colors.length;
-                colors.push('#' + toHex(r) + toHex(g) + toHex(b));
+                colors.push(new Color(r, g, b));
                 colorCount++;
             }
         }
@@ -94,7 +94,7 @@ function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
         const frameNum = ((stuffVideo.currentTime + 0.001 * 60) / (1 / videoFps)) | 0;
 
         if (lastFrame - 1 < frameNum) {
-            // console.time('render');
+            console.time('render');
             if (!lookupReady) buildColorLookup();
             const width = frameWidth, height = frameHeight;
             frameCtx.drawImage(stuffVideo, 0, 0, width, height);
@@ -128,10 +128,10 @@ function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
             }
             // console.log(len / lastFrameColorIndexCache.length * 100);
             for (const [cx, cy, result] of out)
-                chunkManager.getChunk(cx, cy).setCellsColor(result, mainCanvas);
+                chunkManager.getChunk(cx, cy).setCellsColor(result);
             calculateTeam();
             updateMiniMap(lastFrame % 5 === 0);
-            // console.timeEnd('render');
+            console.timeEnd('render');
 
             lastFrame = frameNum + 1;
         }
