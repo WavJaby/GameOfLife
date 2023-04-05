@@ -1,11 +1,10 @@
 /**
  * @param {ChunkManager} chunkManager
- * @param mainCanvas
- * @param colors
+ * @param {Color[]} colors
  * @param calculateTeam
  * @param updateMiniMap
  */
-function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
+function Stuff(chunkManager, colors, calculateTeam, updateMiniMap) {
     // const gifSegmentUrl = 'web/stuff/stuff.gif';
     const gifSegmentUrl = 'web/stuff/segment/output_%%.gif';
     let readGifSegmentIndex = 0, totalGifSegment = 42;
@@ -16,7 +15,10 @@ function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
     const stuffAudio = document.getElementById('stuffAudio');
     let playing = false;
     this.play = function () {
-        if (readers.length === 0) return;
+        if (readers.length === 0) return false;
+        if (playing) return true;
+        playing = true;
+
         processFrame();
         stuffAudio.play();
         stopButton.style.display = 'block';
@@ -31,10 +33,8 @@ function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
                 stopButton.textContent = 'play';
             }
         }
-        playing = true;
-    };
-    this.playing = function () {
-        return playing;
+
+        return true;
     };
 
     // Read palette
@@ -53,7 +53,7 @@ function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
             const color = (r << 16) | (g << 8) | b;
             if (colorTable[color] === undefined) {
                 colorTable[color] = colors.length;
-                colors.push('#' + toHex(r) + toHex(g) + toHex(b));
+                colors.push(new Color(r, g, b));
                 colorCount++;
             }
         }
@@ -85,7 +85,7 @@ function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
         const frameNum = ((stuffAudio.currentTime + 0.001 * 60) / (1 / gifFps)) | 0;
 
         if (lastFrame - 1 < frameNum) {
-            // console.time('render');
+            console.time('render');
             let reader = await getReader();
             // console.log(frameNum + ' skip: ' + (frameNum - lastFrame));
             const width = reader.width, height = reader.height;
@@ -148,10 +148,10 @@ function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
             }
             // console.log(len / lastFrameColorIndexCache.length * 100);
             for (const [cx, cy, result] of out)
-                chunkManager.getChunk(cx, cy).setCellsColor(result, mainCanvas);
+                chunkManager.getChunk(cx, cy).setCellsColor(result);
             calculateTeam();
             updateMiniMap(lastFrame % 5 === 0);
-            // console.timeEnd('render');
+            console.timeEnd('render');
 
             lastFrame = frameNum + 1;
         }
@@ -182,7 +182,7 @@ function Stuff(chunkManager, mainCanvas, colors, calculateTeam, updateMiniMap) {
 
     // // Video
     // const v = document.getElementById('v');
-    // v.addEventListener("loadedmetadata", function (e) {
+    // v.addEventListener('loadedmetadata', function (e) {
     //     const width = this.videoWidth, height = this.videoHeight;
     //
     //     const ctx = document.createElement('canvas').getContext('2d');

@@ -10,6 +10,6 @@ function Color(r, g, b) {
     this.b = b;
 }
 
-Color.prototype.toString = function() {
-    return 'rgb(' + this.r + ',' + this.g + ',' + this.b + ')';
+Color.prototype.toString = function () {
+    return '#' + ((this.r << 16) | (this.g << 8) | this.b).toString(16).padStart(6, '0');
 }
