@@ -53,21 +53,31 @@ function TemplateManager(chunkManager, world) {
                 child.setAttribute('width', '1');
                 child.setAttribute('height', '1');
             }
-            template.onclick = (event) => {
+            template.addEventListener('touchstart', template.onmousedown = (event) => {
                 if (selectTemplate === templateClone) return;
                 const lastTemplate = selectTemplate;
                 selectTemplate = templateClone;
                 selectTemplateData = modelData.slice(1, modelHeight + 1);
 
                 setTeamColor();
-                this.updateLocation(event.clientX, event.clientY);
+                let clientX, clientY;
+                if (event instanceof TouchEvent) {
+                    const touch = event.changedTouches[0];
+                    clientX = touch.clientX;
+                    clientY = touch.clientY;
+                } else {
+                    clientX = event.clientX;
+                    clientY = event.clientY;
+                }
+                this.updateLocation(clientX, clientY);
 
                 if (lastTemplate) {
                     lastTemplate.style.transform = null;
                     templateDisplay.replaceChild(selectTemplate, lastTemplate);
                 } else
                     templateDisplay.appendChild(selectTemplate);
-            };
+                event.preventDefault();
+            });
             template.appendChild(svg);
 
             // Name

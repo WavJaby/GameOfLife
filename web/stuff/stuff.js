@@ -3,12 +3,13 @@
  * @param {Color[]} colors
  * @param calculateTeam
  * @param updateMiniMap
+ * @param updateMainCanvas
  */
-function Stuff(chunkManager, colors, calculateTeam, updateMiniMap) {
+function Stuff(chunkManager, colors, calculateTeam, updateMiniMap, updateMainCanvas) {
     const frameWidth = 320, frameHeight = 240;
     const videoFps = 25;
 
-    const stopButton = document.getElementById('stopIt');
+    // const stopButton = document.getElementById('stopIt');
     const stuffVideo = document.getElementById('stuffVideo');
     let playing = false;
     this.play = function () {
@@ -16,20 +17,20 @@ function Stuff(chunkManager, colors, calculateTeam, updateMiniMap) {
         if (playing) return true;
         playing = true;
 
-        processFrame();
+        requestAnimationFrame(processFrame);
         stuffVideo.play();
-        stopButton.style.display = 'block';
-        stopButton.textContent = 'pause';
-        stopButton.onclick = function () {
-            if (!ready) return;
-            if (stuffVideo.paused) {
-                stuffVideo.play();
-                stopButton.textContent = 'pause';
-            } else {
-                stuffVideo.pause();
-                stopButton.textContent = 'play';
-            }
-        }
+        // stopButton.style.display = 'block';
+        // stopButton.textContent = 'pause';
+        // stopButton.onclick = function () {
+        //     if (!ready) return;
+        //     if (stuffVideo.paused) {
+        //         stuffVideo.play();
+        //         stopButton.textContent = 'pause';
+        //     } else {
+        //         stuffVideo.pause();
+        //         stopButton.textContent = 'play';
+        //     }
+        // }
 
         return true;
     };
@@ -54,7 +55,7 @@ function Stuff(chunkManager, colors, calculateTeam, updateMiniMap) {
                 colorCount++;
             }
         }
-        console.log(colorTable);
+        // console.log(colorTable);
         chunkManager.addTeam(new Array(colorCount).fill(0));
     };
     palette.src = 'web/stuff/palette.png';
@@ -129,6 +130,7 @@ function Stuff(chunkManager, colors, calculateTeam, updateMiniMap) {
             // console.log(len / lastFrameColorIndexCache.length * 100);
             for (const [cx, cy, result] of out)
                 chunkManager.getChunk(cx, cy).setCellsColor(result);
+            updateMainCanvas();
             calculateTeam();
             updateMiniMap(lastFrame % 5 === 0);
             console.timeEnd('render');
