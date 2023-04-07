@@ -52,13 +52,12 @@ function Main() {
     const chunkWidth = 16, chunkHeight = 16
     let simulateInterval;
     // move
-    let totalZoomDelta = 0;
     let startMoveX, startMoveY;
 
     /** init */
     const world = {
         x: 0, y: 0,
-        scale: 5, mainCanvas: canvas
+        scale: 5, mainCanvas: buffFrame
     };
     // Chunk manager
     const chunkManager = new ChunkManager(world);
@@ -74,13 +73,11 @@ function Main() {
         new Color(0, 200, 200),
         new Color(200, 200, 200)
     );
-    const stuff = new Stuff(chunkManager, cellStateColors, calculateTeam, minMap.updateMiniMap);
+    const stuff = new Stuff(chunkManager, cellStateColors, calculateTeam, minMap.updateMiniMap, updateMainCanvas);
     gameWindow.style.backgroundColor = cellStateColors[0].toString();
 
     templateManager.loadTemplate();
     world.y = 50;
-    resizeScreen();
-    addEventListener('resize', resizeScreen);
     if (1) {
         chunkManager.getChunk(0, 0).addCells([
             [12, 2], [13, 2], [14, 2], [11, 3], [14, 3], [15, 3], [10, 4], [14, 4], [10, 5], [15, 5], [12, 6], [0, 7], [1, 7], [2, 7], [3, 7], [9, 7], [11, 7], [0, 8],
@@ -104,6 +101,8 @@ function Main() {
         ], 0);
         // calculateTeam();
     }
+    resizeScreen();
+    addEventListener('resize', resizeScreen);
     calculateTeam();
     minMap.updateMiniMap(true);
     minMap.updateLocationText();
@@ -132,15 +131,16 @@ function Main() {
             templateManager.rotateTemplate(event);
     }
 
-    userInteractionManager(playground, clockDown, endDrag, onDrag, onMove, onClick);
+    userInteractionManager(playground, clickDown, onDragEnd, onDrag, onMove, onClick, onRelease, onZoom);
 
-    function clockDown(clientX, clientY) {
+    function clickDown(clientX, clientY) {
         startMoveX = clientX - world.x;
         startMoveY = clientY - world.y;
     }
 
     function onMove(clientX, clientY) {
         templateManager.updateLocation(clientX, clientY);
+        minMap.updateLocationText(clientX, clientY);
     }
 
     function onDrag(clientX, clientY) {
@@ -149,10 +149,9 @@ function Main() {
         world.x = moveX;
         world.y = moveY;
         updateLocation();
-        minMap.updateLocationText(clientX, clientY);
     }
 
-    function endDrag(clientX, clientY) {
+    function onDragEnd(clientX, clientY) {
         minMap.updateMiniMap(true);
     }
 
@@ -190,29 +189,54 @@ function Main() {
                 calculateTeam();
             }
         }
+
+        updateMainCanvas();
+
         minMap.updateMiniMap(true);
     }
 
-    playground.onwheel = function (event) {
-        totalZoomDelta += event.deltaY * 0.03;
-        if (Math.abs(totalZoomDelta) < 1) return;
+    function onRelease(clientX, clientY) {
+        if (clientX > playground.width || clientY > playground.height) return;
+        console.log('release');
+        if (templateManager.selectTemplate()) {
+            // Place template
+            const change = templateManager.checkPlaceTemplate(clientX, clientY);
+            if (change != null) {
+                for (/**@type{int}*/const x in change) {
+                    const chunkX = change[x];
+                    for (/**@type{int}*/const y in chunkX)
+                        chunkManager.getChunk(x, y).addCells(chunkX[y], teamID);
+                }
+                templateManager.clearSelect();
+            }
+
+            updateMainCanvas();
+
+            minMap.updateMiniMap(true);
+        }
+    }
+
+    function onZoom(clientX, clientY, delta) {
+        // totalZoomDelta += delta * 0.03;
+        // if (Math.abs(totalZoomDelta) < 1) return;
 
         const lastWorldScale = world.scale;
-        world.scale += totalZoomDelta > 0 ? 1 : -1;
-        totalZoomDelta -= totalZoomDelta | 0;
+        // world.scale += totalZoomDelta > 0 ? 1 : -1;
+        // totalZoomDelta -= totalZoomDelta | 0;
+
+        world.scale += delta * 0.03;
         if (world.scale < screenMinScale)
             world.scale = screenMinScale;
         if (lastWorldScale === world.scale)
             return;
 
-        const vecX = event.clientX - world.x;
-        const vecY = event.clientY - world.y;
+        const vecX = clientX - world.x;
+        const vecY = clientY - world.y;
         world.x -= (vecX * world.scale / lastWorldScale - vecX);
         world.y -= (vecY * world.scale / lastWorldScale - vecY);
 
         updateLocation();
-        templateManager.updateLocation(event.clientX, event.clientY);
-        event.preventDefault();
+        templateManager.updateLocation(clientX, clientY);
     }
 
     function calculateGeneration() {
@@ -222,21 +246,23 @@ function Main() {
         const generationCount = chunkManager.getGenerationCount();
         generationCounter.textContent = generationCount.toString();
 
-        //更新畫面
-        //計算畫面中有幾個chunk
-        const xChunkCount = (playground.width / (world.scale * chunkWidth) | 0) + 2;
-        const yChunkCount = (playground.height / (world.scale * chunkHeight) | 0) + 2;
-        //計算chunk開始位置
-        const startX = ((-world.x / world.scale / chunkWidth | 0) - 1 + (world.x < 0));
-        const startY = ((-world.y / world.scale / chunkHeight | 0) - 1 + (world.y < 0));
+        // Update canvas
+        const viewWidth = playground.width;
+        const viewHeight = playground.height;
+        const chunkPixelWidth = world.scale * chunkWidth;
+        const chunkPixelHeight = world.scale * chunkHeight;
+        const chunkCountX = (viewWidth / chunkPixelWidth | 0) + 2;
+        const chunkCountY = (viewHeight / chunkPixelHeight | 0) + 2;
+        const startX = ((-world.x / world.scale / chunkWidth | 0) - (world.x < 0 ? 0 : 1));
+        const startY = ((-world.y / world.scale / chunkHeight | 0) - (world.y < 0 ? 0 : 1));
         for (const chunk of needChange) {
             chunk.renderChange(
-                chunk.x >= startX && chunk.x < startX + xChunkCount &&
-                chunk.y >= startY && chunk.y < startY + yChunkCount,
-                generationCount,
-                canvas
+                startX, startY,
+                chunk.x >= startX && chunk.x < startX + chunkCountX && chunk.y >= startY && chunk.y < startY + chunkCountY,
+                generationCount
             );
         }
+        updateMainCanvas(chunkCountX, chunkCountY, chunkPixelWidth, chunkPixelHeight);
 
         calculateTeam();
         minMap.updateMiniMap();
@@ -250,47 +276,70 @@ function Main() {
     function renderAllChunks() {
         const viewWidth = playground.width;
         const viewHeight = playground.height;
-        const worldX = world.x + 0.5 | 0, worldY = world.y + 0.5 | 0;
+        const chunkPixelWidth = world.scale * chunkWidth;
+        const chunkPixelHeight = world.scale * chunkHeight;
+        const chunkCountX = (viewWidth / chunkPixelWidth | 0) + 2;
+        const chunkCountY = (viewHeight / chunkPixelHeight | 0) + 2;
+        const startX = ((-world.x / world.scale / chunkWidth | 0) - (world.x < 0 ? 0 : 1));
+        const startY = ((-world.y / world.scale / chunkHeight | 0) - (world.y < 0 ? 0 : 1));
 
+        buffFrame.canvas.width = chunkCountX * chunkWidth;
+        buffFrame.canvas.height = chunkCountY * chunkHeight;
         buffFrame.imageSmoothingEnabled = false;
         buffFrame.fillStyle = cellStateColors[0].toString();
-        buffFrame.fillRect(0, 0, viewWidth, viewHeight);
-        //計算畫面中有幾個chunk
-        const xChunkCount = (viewWidth / (world.scale * chunkWidth) | 0) + 2;
-        const yChunkCount = (viewHeight / (world.scale * chunkHeight) | 0) + 2;
-        //計算chunk開始位置
-        const startX = ((-world.x / world.scale / chunkWidth | 0) - 1 + (world.x < 0));
-        const startY = ((-world.y / world.scale / chunkHeight | 0) - 1 + (world.y < 0));
-        chunkManager.renderChunksInRange(startX, startY, xChunkCount, yChunkCount, buffFrame);
-        minMap.setLocation(startX + 1, startY + 1, xChunkCount - 2, yChunkCount - 2);
+        buffFrame.fillRect(0, 0, buffFrame.canvas.width, buffFrame.canvas.height);
+        chunkManager.renderChunksInRange(startX, startY, chunkCountX, chunkCountY);
+
+        minMap.setLocation(startX + 1, startY + 1, chunkCountX - 2, chunkCountY - 2);
+
+        updateMainCanvas(chunkCountX, chunkCountY, chunkPixelWidth, chunkPixelHeight);
+        // console.time('renderAllChunks');
+
+        // console.timeEnd('renderAllChunks');
+        // debug();
+    }
+
+    /**
+     * @param {int} [chunkCountX]
+     * @param {int} [chunkCountY]
+     * @param {int} [chunkPixelWidth]
+     * @param {int} [chunkPixelHeight]
+     */
+    function updateMainCanvas(chunkCountX, chunkCountY, chunkPixelWidth, chunkPixelHeight) {
+        const viewWidth = playground.width;
+        const viewHeight = playground.height;
+        if (chunkCountX === undefined) {
+            chunkPixelWidth = world.scale * chunkWidth;
+            chunkPixelHeight = world.scale * chunkHeight;
+            chunkCountX = (viewWidth / chunkPixelWidth | 0) + 2;
+            chunkCountY = (viewHeight / chunkPixelHeight | 0) + 2;
+        }
+
+        canvas.imageSmoothingEnabled = false;
+        canvas.drawImage(buffFrame.canvas,
+            world.x % chunkPixelWidth - (world.x < 0 ? 0 : chunkPixelWidth), world.y % chunkPixelHeight - (world.y < 0 ? 0 : chunkPixelHeight),
+            chunkCountX * chunkWidth * world.scale, chunkCountY * chunkHeight * world.scale
+        );
 
         // Draw grid
         if (world.scale > drawLineScreenScale) {
-            const viewWidth = playground.width;
-            const viewHeight = playground.height;
+            canvas.lineWidth = cellWallSize;
+            canvas.strokeStyle = strokeStyle;
+            canvas.beginPath();
 
-            buffFrame.lineWidth = cellWallSize;
-            buffFrame.strokeStyle = strokeStyle;
-            buffFrame.beginPath();
+            const worldX = world.x + 0.5 | 0, worldY = world.y + 0.5 | 0;
             const lStartX = worldX % world.scale;
             const lStartY = worldY % world.scale;
             for (let y = 0; y < viewHeight + world.scale; y += world.scale) {
-                buffFrame.moveTo(0, lStartY + y);
-                buffFrame.lineTo(viewWidth, lStartY + y);
+                canvas.moveTo(0, lStartY + y);
+                canvas.lineTo(viewWidth, lStartY + y);
             }
             for (let x = 0; x < viewWidth + world.scale; x += world.scale) {
-                buffFrame.moveTo(lStartX + x, 0);
-                buffFrame.lineTo(lStartX + x, viewHeight);
+                canvas.moveTo(lStartX + x, 0);
+                canvas.lineTo(lStartX + x, viewHeight);
             }
-            buffFrame.stroke();
+            canvas.stroke();
         }
-
-        // console.time('renderAllChunks');
-        // Update frame buff to main canvas
-        canvas.imageSmoothingEnabled = false;
-        canvas.drawImage(buffFrame.canvas, 0, 0);
-        // console.timeEnd('renderAllChunks');
-        // debug();
     }
 
     function calculateTeam() {
@@ -325,8 +374,8 @@ function Main() {
 
     function resizeScreen() {
         if (playground.width !== gameWindow.offsetWidth || playground.height !== gameWindow.offsetHeight) {
-            buffFrame.canvas.width = playground.width = gameWindow.offsetWidth;
-            buffFrame.canvas.height = playground.height = gameWindow.offsetHeight;
+            playground.width = gameWindow.offsetWidth;
+            playground.height = gameWindow.offsetHeight;
             renderAllChunks();
         }
     }
@@ -438,63 +487,116 @@ function createTextWithLabel(label, className, parent) {
     return textContent;
 }
 
-function userInteractionManager(targetElement, clickDown, endDrag, onDrag, onMove, onClick) {
+function userInteractionManager(targetElement, onPress, onDragEnd, onDrag, onMove, onClick, onRelease, onZoom) {
+    const eventPrefixMap = {
+        pointerdown: 'MSPointerDown',
+        pointerup: 'MSPointerUp',
+        pointercancel: 'MSPointerCancel',
+        pointermove: 'MSPointerMove',
+        pointerover: 'MSPointerOver',
+        pointerout: 'MSPointerOut',
+        pointerenter: 'MSPointerEnter',
+        pointerleave: 'MSPointerLeave',
+        gotpointercapture: 'MSGotPointerCapture',
+        lostpointercapture: 'MSLostPointerCapture',
+        maxTouchPoints: 'msMaxTouchPoints',
+    };
+
     const moveTimeThreshold = 500;
     const moveThreshold = 6;
-    let mouseLeftDown = false;
-    let touchDown = false;
+
+    let pressDown = false;
+    let eventPointerType = null;
+    let eventPointerId = -1;
+
+    // Pinch zoom
+    const pointers = new Map();
+    let prevDiff = -1;
+
+    // Drag
     let moved = false;
-    let startClickDownX, startClickDownY;
-    let startTime;
+    let startTime, startClickDownX, startClickDownY;
+
+    // Right click menu
+    window.addEventListener('contextmenu', function (event) {
+        event.preventDefault();
+    });
+
+    if ('TouchEvent' in window) {
+        targetElement.addEventListener('touchstart', function (event) {
+            event.preventDefault();
+        });
+    }
+
+    if ('PointerEvent' in window) {
+        targetElement.addEventListener('pointerdown', onClickDown);
+        window.addEventListener('pointerup', onClickUp);
+        window.addEventListener('pointermove', onClickMove);
+    } else if (window.navigator && 'msPointerEnabled' in window.navigator) {
+        // IE 10
+        targetElement.addEventListener(eventPrefixMap.pointerdown, onClickDown);
+        window.addEventListener(eventPrefixMap.pointerup, onClickUp);
+        window.addEventListener(eventPrefixMap.pointermove, onClickMove);
+    } else {
+        targetElement.addEventListener('mousedown', onClickDown);
+        window.addEventListener('mouseup', onClickUp);
+        window.addEventListener('mousemove', onClickMove);
+    }
 
     // Click down
-    targetElement.addEventListener('touchstart', onClickDown);
-    targetElement.addEventListener('mousedown', onClickDown);
-
     function onClickDown(event) {
-        if (!touchDown && !mouseLeftDown) {
-            moved = false;
-            startTime = window.performance.now();
-            // Touch
-            if (event instanceof TouchEvent) {
-                const touch = event.targetTouches[0];
-                touchDown = true;
-                clickDown(startClickDownX = touch.clientX, startClickDownY = touch.clientY);
-            }
-            // Mouse
-            else {
-                // Mouse left click
-                if (event.button === 0) {
-                    mouseLeftDown = true;
-                    clickDown(startClickDownX = event.clientX, startClickDownY = event.clientY);
-                }
-            }
-
-            // console.log('down', touchDown, mouseLeftDown);
+        // Pointer type, pen|mouse|touch
+        let pointerType;
+        let pointerId;
+        if (window.PointerEvent && event instanceof window.PointerEvent) {
+            pointerType = event.pointerType;
+            pointerId = event.pointerId;
+            pointers.set(pointerId, event);
+        } else {
+            pointerType = null;
+            pointerId = -1;
         }
 
-        // if (event instanceof MouseEvent)
+        if (!pressDown) {
+            if (event.button === 0) {
+                moved = false;
+                pressDown = true;
+                startTime = window.performance.now();
+                startClickDownX = event.clientX;
+                startClickDownY = event.clientY;
+                eventPointerType = pointerType;
+                eventPointerId = pointerId;
+                onPress(startClickDownX, startClickDownY);
+            }
+
+            console.log('dn', pressDown, eventPointerType);
+        }
+
         event.preventDefault();
     }
 
 
     // Move
-    targetElement.addEventListener('touchmove', onClickMove);
-    window.addEventListener('mousemove', onClickMove);
-
     function onClickMove(event) {
-        const touchEvent = event instanceof TouchEvent;
-        let clientX, clientY;
-        if (touchEvent) {
-            const touch = event.targetTouches[0];
-            clientX = touch.clientX;
-            clientY = touch.clientY;
+        const clientX = event.clientX, clientY = event.clientY;
+        // Pointer type, pen|mouse|touch
+        let pointerType;
+        let pointerId;
+        if (window.PointerEvent && event instanceof window.PointerEvent) {
+            pointerType = event.pointerType;
+            pointerId = event.pointerId;
+            pointers.set(pointerId, event);
+            if (pointers.size === 2) {
+                pinchZoom();
+                return;
+            }
         } else {
-            clientX = event.clientX;
-            clientY = event.clientY;
+            pointerType = null;
+            pointerId = -1;
         }
 
-        if ((touchEvent && touchDown || !touchEvent && mouseLeftDown) && (
+        // Dragging
+        if (pressDown && eventPointerType === pointerType && eventPointerId === pointerId && (
             Math.abs(clientX - startClickDownX) > moveThreshold ||
             Math.abs(clientY - startClickDownY) > moveThreshold ||
             window.performance.now() - startTime > moveTimeThreshold)
@@ -503,53 +605,74 @@ function userInteractionManager(targetElement, clickDown, endDrag, onDrag, onMov
             onDrag(clientX, clientY);
         } else
             onMove(clientX, clientY);
-        if (event instanceof MouseEvent)
-            event.preventDefault();
+
+        // console.log('mv', eventPointerType, pointerType);
+
+        event.preventDefault();
     }
 
 
     // Release
-    // targetElement.addEventListener('touchcancel', onMouseUp);
-    targetElement.addEventListener('touchend', onClickUp);
-    window.addEventListener('mouseup', onClickUp);
-
     function onClickUp(event) {
-        const touchEvent = event instanceof TouchEvent;
-        let clientX, clientY;
-
-        // console.log('up', touchDown, mouseLeftDown);
-
-        if (touchEvent) {
-            const touch = event.changedTouches[0];
-            clientX = touch.clientX;
-            clientY = touch.clientY;
-
-            if (event.targetTouches.length > 0) {
-                //TODO: multiple touch support
-            }
+        const clientX = event.clientX, clientY = event.clientY;
+        // Pointer type, pen|mouse|touch
+        let pointerType;
+        let pointerId;
+        if (window.PointerEvent && event instanceof window.PointerEvent) {
+            pointerType = event.pointerType;
+            pointerId = event.pointerId;
+            pointers.delete(pointerId);
+            pinchZoomEnd();
         } else {
-            clientX = event.clientX;
-            clientY = event.clientY;
+            pointerType = null;
+            pointerId = -1;
         }
 
+        // Drag
+        if (eventPointerType === pointerType && eventPointerId === pointerId) {
+            if (pressDown) {
+                if (moved)
+                    onDragEnd(clientX, clientY);
+                else
+                    onClick(clientX, clientY);
 
-        if (touchEvent && touchDown || !touchEvent && mouseLeftDown) {
-            if (moved)
-                endDrag(clientX, clientY);
-            else
-                onClick(clientX, clientY);
+                pressDown = false;
+                eventPointerType = null;
+            }
+            console.log('up', pointerType);
+        } else
+            onRelease(clientX, clientY);
 
-            touchDown = false;
-            mouseLeftDown = false;
-        }
 
-        if (event instanceof MouseEvent)
-            event.preventDefault();
+        event.preventDefault();
     }
 
+    targetElement.onwheel = function (event) {
+        onZoom(event.clientX, event.clientY, event.deltaY);
+        event.preventDefault();
+    };
 
-    window.addEventListener('contextmenu', function (event) {
-        if (touchDown || mouseLeftDown)
-            event.preventDefault();
-    });
+    // Pinch zoom
+    function pinchZoom() {
+        const valuesIterator = pointers.values();
+        const p0 = valuesIterator.next().value;
+        const p1 = valuesIterator.next().value;
+        const dx = p1.clientX - p0.clientX;
+        const dy = p1.clientY - p0.clientY;
+
+        const curDiff = Math.sqrt(dx * dx + dy * dy);
+        // console.log(p0, p1)
+
+        onZoom(p1.clientX, p1.clientY, (curDiff - prevDiff));
+        // console.log(curDiff - prevDiff);
+
+        prevDiff = curDiff;
+    }
+
+    function pinchZoomEnd() {
+        if (prevDiff !== -1) {
+            prevDiff = -1;
+            console.log('zoomEnd');
+        }
+    }
 }
