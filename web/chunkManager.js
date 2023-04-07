@@ -65,7 +65,7 @@ function ChunkManager(world) {
         return needChange;
     }
 
-    this.renderChunksInRange = function (startX, startY, xChunkCount, yChunkCount, buffFrame) {
+    this.renderChunksInRange = function (startX, startY, xChunkCount, yChunkCount) {
         for (let x = 0; x < xChunkCount; x++) {
             //計算chunk位置X
             const cx = chunks[startX + x | 0];
@@ -74,7 +74,7 @@ function ChunkManager(world) {
                 //計算chunk位置Y
                 const cy = cx[startY + y | 0];
                 if (cy !== undefined)
-                    cy.drawChunk(generationCount, buffFrame);
+                    cy.drawChunk(startX, startY, generationCount);
             }
         }
     }
