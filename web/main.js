@@ -3,7 +3,6 @@
 const minChunkX = -1024, minChunkY = -1024, maxChunkX = 1024, maxChunkY = 1024;
 const cellWallSize = 2;
 // screen
-const zoomDelta = 1;
 const screenMinScale = 1;
 const drawLineScreenScale = 15;
 const strokeStyle = 'rgb(54, 54, 54)';
@@ -53,11 +52,13 @@ function Main() {
     let simulateInterval;
     // move
     let startMoveX, startMoveY;
+    let pinchZoomBeginX, pinchZoomBeginY;
+    let pinchZoomBeginScale;
 
     /** init */
     const world = {
         x: 0, y: 0,
-        scale: 5, mainCanvas: buffFrame
+        scale: 15, mainCanvas: buffFrame
     };
     // Chunk manager
     const chunkManager = new ChunkManager(world);
@@ -131,9 +132,10 @@ function Main() {
             templateManager.rotateTemplate(event);
     }
 
-    userInteractionManager(playground, clickDown, onDragEnd, onDrag, onMove, onClick, onRelease, onZoom);
+    userInteractionManager(playground, clickDown, onDragEnd, onDrag, onMove, onClick, onRelease, onZoom, onPinchZoomBegin, onPinchZoom);
 
     function clickDown(clientX, clientY) {
+        // console.log('d', clientX, clientY);
         startMoveX = clientX - world.x;
         startMoveY = clientY - world.y;
     }
@@ -144,6 +146,7 @@ function Main() {
     }
 
     function onDrag(clientX, clientY) {
+        // console.log('m', clientX, clientY);
         const moveX = clientX - startMoveX;
         const moveY = clientY - startMoveY;
         world.x = moveX;
@@ -197,7 +200,6 @@ function Main() {
 
     function onRelease(clientX, clientY) {
         if (clientX > playground.width || clientY > playground.height) return;
-        console.log('release');
         if (templateManager.selectTemplate()) {
             // Place template
             const change = templateManager.checkPlaceTemplate(clientX, clientY);
@@ -217,13 +219,7 @@ function Main() {
     }
 
     function onZoom(clientX, clientY, delta) {
-        // totalZoomDelta += delta * 0.03;
-        // if (Math.abs(totalZoomDelta) < 1) return;
-
         const lastWorldScale = world.scale;
-        // world.scale += totalZoomDelta > 0 ? 1 : -1;
-        // totalZoomDelta -= totalZoomDelta | 0;
-
         world.scale += delta * 0.03;
         if (world.scale < screenMinScale)
             world.scale = screenMinScale;
@@ -236,7 +232,31 @@ function Main() {
         world.y -= (vecY * world.scale / lastWorldScale - vecY);
 
         updateLocation();
-        templateManager.updateLocation(clientX, clientY);
+    }
+
+    function onPinchZoomBegin(p0, p1) {
+        const dx = p1.clientX - p0.clientX;
+        const dy = p1.clientY - p0.clientY;
+        const curLen = Math.sqrt(dx * dx + dy * dy);
+
+        pinchZoomBeginScale = world.scale / curLen;
+        pinchZoomBeginX = (Math.min(p1.clientX, p0.clientX) + (Math.abs(dx) - curLen) * 0.5 - world.x) / world.scale;
+        pinchZoomBeginY = (Math.min(p1.clientY, p0.clientY) + (Math.abs(dy) - curLen) * 0.5 - world.y) / world.scale;
+    }
+
+    function onPinchZoom(p0, p1) {
+        const dx = p1.clientX - p0.clientX;
+        const dy = p1.clientY - p0.clientY;
+        const curLen = Math.sqrt(dx * dx + dy * dy);
+
+        world.scale = curLen * pinchZoomBeginScale;
+        if (world.scale < screenMinScale)
+            world.scale = screenMinScale;
+
+        world.x = Math.min(p1.clientX, p0.clientX) + (Math.abs(dx) - curLen) * 0.5 - pinchZoomBeginX * world.scale;
+        world.y = Math.min(p1.clientY, p0.clientY) + (Math.abs(dy) - curLen) * 0.5 - pinchZoomBeginY * world.scale;
+
+        updateLocation();
     }
 
     function calculateGeneration() {
@@ -327,9 +347,8 @@ function Main() {
             canvas.strokeStyle = strokeStyle;
             canvas.beginPath();
 
-            const worldX = world.x + 0.5 | 0, worldY = world.y + 0.5 | 0;
-            const lStartX = worldX % world.scale;
-            const lStartY = worldY % world.scale;
+            const lStartX = world.x % world.scale;
+            const lStartY = world.y % world.scale;
             for (let y = 0; y < viewHeight + world.scale; y += world.scale) {
                 canvas.moveTo(0, lStartY + y);
                 canvas.lineTo(viewWidth, lStartY + y);
@@ -487,7 +506,7 @@ function createTextWithLabel(label, className, parent) {
     return textContent;
 }
 
-function userInteractionManager(targetElement, onPress, onDragEnd, onDrag, onMove, onClick, onRelease, onZoom) {
+function userInteractionManager(targetElement, onPress, onDragEnd, onDrag, onMove, onClick, onRelease, onZoom, onPinchZoomBegin, onPinchZoom) {
     const eventPrefixMap = {
         pointerdown: 'MSPointerDown',
         pointerup: 'MSPointerUp',
@@ -505,17 +524,12 @@ function userInteractionManager(targetElement, onPress, onDragEnd, onDrag, onMov
     const moveTimeThreshold = 500;
     const moveThreshold = 6;
 
-    let pressDown = false;
-    let eventPointerType = null;
     let eventPointerId = -1;
 
     // Pinch zoom
+    const pointerStart = new Map();
     const pointers = new Map();
-    let prevDiff = -1;
-
-    // Drag
-    let moved = false;
-    let startTime, startClickDownX, startClickDownY;
+    let pinchZooming = false;
 
     // Right click menu
     window.addEventListener('contextmenu', function (event) {
@@ -545,106 +559,106 @@ function userInteractionManager(targetElement, onPress, onDragEnd, onDrag, onMov
 
     // Click down
     function onClickDown(event) {
-        // Pointer type, pen|mouse|touch
-        let pointerType;
         let pointerId;
         if (window.PointerEvent && event instanceof window.PointerEvent) {
-            pointerType = event.pointerType;
             pointerId = event.pointerId;
-            pointers.set(pointerId, event);
         } else {
-            pointerType = null;
             pointerId = -1;
         }
+        const continueMove = pointerStart.get(pointerId);
+        event.moved = false;
+        if (!continueMove) {
+            pointerStart.set(pointerId, event);
+            event.pinchZoom = false;
+        }
+        pointers.set(pointerId, event);
 
-        if (!pressDown) {
-            if (event.button === 0) {
-                moved = false;
-                pressDown = true;
-                startTime = window.performance.now();
-                startClickDownX = event.clientX;
-                startClickDownY = event.clientY;
-                eventPointerType = pointerType;
-                eventPointerId = pointerId;
-                onPress(startClickDownX, startClickDownY);
-            }
-
-            console.log('dn', pressDown, eventPointerType);
+        // Pointer button
+        const button = continueMove ? continueMove.button : event.button;
+        if (button === 0) {
+            onPress(event.clientX, event.clientY);
         }
 
         event.preventDefault();
+
+        console.log('dn', event.pointerType);
     }
 
 
     // Move
     function onClickMove(event) {
-        const clientX = event.clientX, clientY = event.clientY;
-        // Pointer type, pen|mouse|touch
-        let pointerType;
         let pointerId;
         if (window.PointerEvent && event instanceof window.PointerEvent) {
-            pointerType = event.pointerType;
             pointerId = event.pointerId;
-            pointers.set(pointerId, event);
-            if (pointers.size === 2) {
-                pinchZoom();
-                return;
-            }
         } else {
-            pointerType = null;
             pointerId = -1;
         }
+        const havePointerPress = pointerStart.get(pointerId);
+        if (havePointerPress) {
+            const pointerEvent = pointers.get(pointerId);
+            event.moved = pointerEvent.moved;
+            event.pinchZoom = pointerEvent.pinchZoom;
+            pointers.set(pointerId, event);
+        }
+        if (pointers.size === 2) {
+            pinchZoom();
+            return;
+        }
 
-        // Dragging
-        if (pressDown && eventPointerType === pointerType && eventPointerId === pointerId && (
-            Math.abs(clientX - startClickDownX) > moveThreshold ||
-            Math.abs(clientY - startClickDownY) > moveThreshold ||
-            window.performance.now() - startTime > moveTimeThreshold)
-        ) {
-            moved = true;
-            onDrag(clientX, clientY);
-        } else
+        const clientX = event.clientX, clientY = event.clientY;
+        if (!havePointerPress) {
             onMove(clientX, clientY);
-
-        // console.log('mv', eventPointerType, pointerType);
+            // console.log('move');
+        } else if (!event.pinchZoom &&
+            (eventPointerId === -1 || event.pointerId === eventPointerId) &&
+            (event.moved || isPointerMove(havePointerPress, event))) {
+            // Dragging
+            eventPointerId = event.pointerId;
+            event.moved = true;
+            onDrag(clientX, clientY);
+        }
 
         event.preventDefault();
+
+        // console.log('mv', pointerType);
     }
 
 
     // Release
     function onClickUp(event) {
-        const clientX = event.clientX, clientY = event.clientY;
-        // Pointer type, pen|mouse|touch
-        let pointerType;
         let pointerId;
         if (window.PointerEvent && event instanceof window.PointerEvent) {
-            pointerType = event.pointerType;
             pointerId = event.pointerId;
-            pointers.delete(pointerId);
-            pinchZoomEnd();
         } else {
-            pointerType = null;
             pointerId = -1;
         }
+        const havePointerPress = pointerStart.has(pointerId);
+        const pointerEvent = havePointerPress ? pointers.get(pointerId) : null;
+        pointerStart.delete(pointerId);
+        pointers.delete(pointerId);
 
+        const clientX = event.clientX, clientY = event.clientY;
         // Drag
-        if (eventPointerType === pointerType && eventPointerId === pointerId) {
-            if (pressDown) {
-                if (moved)
+        if (havePointerPress) {
+            if (!pointerEvent.pinchZoom)
+                if (pointerEvent.moved)
                     onDragEnd(clientX, clientY);
                 else
                     onClick(clientX, clientY);
-
-                pressDown = false;
-                eventPointerType = null;
-            }
-            console.log('up', pointerType);
         } else
             onRelease(clientX, clientY);
 
-
         event.preventDefault();
+
+        console.log('up', event.pointerType);
+
+        if (event.pointerId === eventPointerId)
+            eventPointerId = -1;
+
+        if (pinchZooming) {
+            pinchZooming = false;
+            pinchZoomEnd();
+        }
     }
 
     targetElement.onwheel = function (event) {
@@ -657,22 +671,33 @@ function userInteractionManager(targetElement, onPress, onDragEnd, onDrag, onMov
         const valuesIterator = pointers.values();
         const p0 = valuesIterator.next().value;
         const p1 = valuesIterator.next().value;
-        const dx = p1.clientX - p0.clientX;
-        const dy = p1.clientY - p0.clientY;
+        // console.log(p0, p1);
 
-        const curDiff = Math.sqrt(dx * dx + dy * dy);
-        // console.log(p0, p1)
-
-        onZoom(p1.clientX, p1.clientY, (curDiff - prevDiff));
-        // console.log(curDiff - prevDiff);
-
-        prevDiff = curDiff;
+        if (!pinchZooming && (
+            isPointerMove(pointerStart.get(p0.pointerId), p0) ||
+            isPointerMove(pointerStart.get(p1.pointerId), p1))) {
+            p0.pinchZoom = true;
+            p1.pinchZoom = true;
+            onPinchZoomBegin(p0, p1);
+            pinchZooming = true;
+            // console.log('Zoom start');
+        } else if (pinchZooming) {
+            onPinchZoom(p0, p1);
+        }
     }
 
     function pinchZoomEnd() {
-        if (prevDiff !== -1) {
-            prevDiff = -1;
-            console.log('zoomEnd');
+        if (pointers.size > 0) {
+            const pointer = pointers.values().next().value;
+            onClickDown(pointer);
         }
+        // console.log('Zoom end');
+    }
+
+    function isPointerMove(pointerStart, pointer) {
+        const dx = pointer.clientX - pointerStart.clientX;
+        const dy = pointer.clientY - pointerStart.clientY;
+        return Math.sqrt(dx * dx + dy * dy) > moveThreshold ||
+            pointer.timeStamp - pointerStart.timeStamp > moveTimeThreshold;
     }
 }
