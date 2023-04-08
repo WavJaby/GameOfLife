@@ -354,7 +354,7 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, generationCount, world, chun
         const chunkStartY = (locY - startY) * chunkHeight;
 
         if (chunkTime !== generationCount) {
-            console.log('render');
+            // console.log('render');
             chunkTime = generationCount;
             chunkCanvas.clearRect(0, 0, chunkWidth, chunkHeight);
             for (let i = 0; i < chunkWidth; i++) {
