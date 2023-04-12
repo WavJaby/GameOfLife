@@ -23,7 +23,6 @@ function Stuff(chunkManager, colors, calculateTeam, updateMiniMap, updateMainCan
 
             if (initial === 0) {
                 if (lastInit === 1) {
-                    initial = true;
                     requestAnimationFrame(processFrame);
                 }
                 stuffVideo.play();
