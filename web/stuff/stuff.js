@@ -14,7 +14,7 @@ function Stuff(chunkManager, colors, calculateTeam, updateMiniMap, updateMainCan
 
     // const stopButton = document.getElementById('stopIt');
     const stuffAudio = document.getElementById('stuffAudio');
-    let initial = 20;
+    let initial = 10;
     let playing = false;
     this.play = function (state) {
         if (readers.length === 0) return playing;
@@ -31,7 +31,7 @@ function Stuff(chunkManager, colors, calculateTeam, updateMiniMap, updateMainCan
                 }
                 stuffAudio.play();
                 playing = true;
-                return lastInit === 1;
+                return lastInit === 0;
             }
         } else {
             stuffAudio.pause();
