@@ -11,7 +11,7 @@ function Stuff(chunkManager, colors, calculateTeam, updateMiniMap, updateMainCan
 
     // const stopButton = document.getElementById('stopIt');
     const stuffVideo = document.getElementById('stuffVideo');
-    let initial = 20;
+    let initial = 10;
     let playing = false;
     this.play = function (state) {
         if (!ready) return playing;
@@ -28,7 +28,7 @@ function Stuff(chunkManager, colors, calculateTeam, updateMiniMap, updateMainCan
                 }
                 stuffVideo.play();
                 playing = true;
-                return lastInit === 1;
+                return lastInit === 0;
             }
         } else {
             stuffVideo.pause();
