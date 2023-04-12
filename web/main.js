@@ -111,13 +111,12 @@ function Main() {
 
     /** listener */
     function playState(state) {
-        // if (stuff.play()) {
-        //     world.x = 0;
-        //     world.y = 0;
-        //     world.scale = 5;
-        //     updateLocation();
-        //     return;
-        // }
+        if (!stuff.play(state)) {
+            world.x = 0;
+            world.y = 0;
+            world.scale = 5;
+            updateLocation();
+        }
 
         if (state) {
             simulateInterval = setInterval(calculateGeneration, 5);
@@ -220,7 +219,7 @@ function Main() {
 
     function onZoom(clientX, clientY, delta) {
         const lastWorldScale = world.scale;
-        world.scale += delta * 0.03;
+        world.scale -= delta * 0.03;
         if (world.scale < screenMinScale)
             world.scale = screenMinScale;
         if (lastWorldScale === world.scale)
