@@ -26,6 +26,7 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, generationCount, world, chun
     const cellData = this.cellData = new Array(chunkWidth);
     //附近有東西的cell
     const activeCellList = new Uint8Array(chunkWidth * chunkWidth);
+    const activeCellUsed = new Uint8Array(chunkWidth * chunkWidth);
     let activeLength = 0;
     //要更改的cell
     const changeList = [];
@@ -120,17 +121,23 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, generationCount, world, chun
     function addActiveCell(x, y) {
         const index = x + y * chunkWidth;
 
-        if (activeLength === 0 || activeCellList.lastIndexOf(index, activeLength - 1) === -1)
-            activeCellList[activeLength++] = x + y * chunkWidth;
+        if (activeCellUsed[index] === 0) {
+            activeCellList[activeLength++] = index;
+            activeCellUsed[index] = 1;
+        }
     }
 
     function removeAliveCell(index) {
+        activeCellUsed[activeCellList[index]] = 0;
         if (index !== --activeLength)
             activeCellList[index] = activeCellList[activeLength];
     }
 
+    /**
+     * @return {int[][]}
+     */
     this.getAliveCells = function () {
-        return activeCellList.filter((v, i) => i < activeLength).map(loc => [loc % chunkWidth, loc / chunkWidth | 0]);
+        return Array.from(activeCellList).slice(0, activeLength).map(loc => [loc % chunkWidth, loc / chunkWidth | 0]);
     }
 
     this.calculateChange = function (generationCount) {
