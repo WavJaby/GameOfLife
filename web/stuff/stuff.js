@@ -14,14 +14,25 @@ function Stuff(chunkManager, colors, calculateTeam, updateMiniMap, updateMainCan
 
     // const stopButton = document.getElementById('stopIt');
     const stuffAudio = document.getElementById('stuffAudio');
+    let initial = false;
     let playing = false;
-    this.play = function () {
-        if (readers.length === 0) return false;
-        if (playing) return true;
-        playing = true;
+    this.play = function (state) {
+        if (readers.length === 0) return playing;
 
-        requestAnimationFrame(processFrame);
-        stuffAudio.play();
+        if (!state) {
+            const lastInit = initial;
+            if (!initial) {
+                initial = true;
+                requestAnimationFrame(processFrame);
+            }
+            stuffAudio.play();
+            playing = true;
+            return lastInit;
+        } else {
+            stuffAudio.pause();
+            playing = false;
+            return true;
+        }
         // stopButton.style.display = 'block';
         // stopButton.textContent = 'pause';
         // stopButton.onclick = function () {
@@ -34,8 +45,6 @@ function Stuff(chunkManager, colors, calculateTeam, updateMiniMap, updateMainCan
         //         stopButton.textContent = 'play';
         //     }
         // }
-
-        return true;
     };
 
     // Read palette
