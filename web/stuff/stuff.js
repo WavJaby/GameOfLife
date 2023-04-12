@@ -14,16 +14,17 @@ function Stuff(chunkManager, colors, calculateTeam, updateMiniMap, updateMainCan
 
     // const stopButton = document.getElementById('stopIt');
     const stuffAudio = document.getElementById('stuffAudio');
-    let initial = 30;
+    let initial = 20;
     let playing = false;
     this.play = function (state) {
         if (readers.length === 0) return playing;
 
         if (!state) {
             const lastInit = initial;
-            if (initial > 0) {
+            if (initial > 0)
                 initial--;
-            } else {
+
+            if (initial === 0) {
                 if (lastInit === 1) {
                     initial = true;
                     requestAnimationFrame(processFrame);
