@@ -1,7 +1,5 @@
 package com.java.server.game;
 
-import com.java.game.CellData;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
