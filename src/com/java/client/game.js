@@ -380,7 +380,7 @@ class Game{
                 }
 
                 if (event.key === 'Escape') {
-                    selectModel = false;
+                    // selectModel = false;
                     placeExample(lastMousePosX, lastMousePosY, true);
                 }
             }
@@ -405,14 +405,14 @@ class Game{
         playground.onmouseup = (event) => {
             //點一下的話
             if (abs(lastMoveX - moveX) < 10 && abs(lastMoveY - moveY) < 10) {
-                if (selectModel) {
-                    const donePlace = placeExample(event.offsetX, event.offsetY);
-                    //沒有按住shift且放置成功
-                    if (!event.shiftKey && donePlace)
-                        selectModel = false;
-                }
-                //一般的點選
-                else {
+                // if (selectModel) {
+                //     const donePlace = placeExample(event.offsetX, event.offsetY);
+                //     //沒有按住shift且放置成功
+                //     if (!event.shiftKey && donePlace)
+                //         selectModel = false;
+                // }
+                // //一般的點選
+                // else {
                     let x = (event.offsetX - mapX) / realPixelSize;
                     let y = (event.offsetY - mapY) / realPixelSize;
                     //計算chunk位置
@@ -443,12 +443,12 @@ class Game{
                     }
                     // chunk.drawChangeCells(canvas);
                 }
-            }
+            // }
             //還在選取狀態
-            else if (selectModel) {
-                drawExample(event.offsetX, event.offsetY, true);
-            }
-            updateMiniMap(true);
+            // else if (selectModel) {
+            //     drawExample(event.offsetX, event.offsetY, true);
+            // }
+            // updateMiniMap(true);
             drag = false;
         }
 
@@ -462,9 +462,9 @@ class Game{
             }
 
             //畫範例
-            if (!drag && selectModel) {
-                drawExample(event.offsetX, event.offsetY, false, false, true);
-            }
+            // if (!drag && selectModel) {
+            //     drawExample(event.offsetX, event.offsetY, false, false, true);
+            // }
         }
 
         playground.onmouseleave = (event) => {
@@ -512,9 +512,9 @@ class Game{
 
             move((xNow - xLast) * realPixelSize, (yNow - yLast) * realPixelSize);
 
-            if (selectModel) {
-                window.requestAnimationFrame(() => drawExample(event.offsetX, event.offsetY, true));
-            }
+            // if (selectModel) {
+            //     window.requestAnimationFrame(() => drawExample(event.offsetX, event.offsetY, true));
+            // }
         }
 
         //視窗重設
@@ -557,16 +557,16 @@ class Game{
 
         //setup
         resizeScreen();
-        loadExample();
-        loadMiniMap({
-            deadPixel: cDeadColor,
-            alivePixelA: cTeamAColor,
-            alivePixelB: cTeamBColor,
-            chunkWidth: cWidth,
-            chunkHeight: cHeight,
-            pixelSize: cPixSize,
-            gap: cGap
-        });
+        // loadExample();
+        // loadMiniMap({
+        //     deadPixel: cDeadColor,
+        //     alivePixelA: cTeamAColor,
+        //     alivePixelB: cTeamBColor,
+        //     chunkWidth: cWidth,
+        //     chunkHeight: cHeight,
+        //     pixelSize: cPixSize,
+        //     gap: cGap
+        // });
 
         function debug() {
             for (const i in chunks) {

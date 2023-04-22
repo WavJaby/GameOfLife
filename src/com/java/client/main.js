@@ -66,7 +66,7 @@ function receiveData(data) {
             game.teamBCount = parseInt(dataInfo['teamBCount']);
             game.calculateTeam();
             updateChunkFromServer(dataInfo['viewArea']);
-            updateMiniMap();
+            // updateMiniMap();
             break;
     }
 
