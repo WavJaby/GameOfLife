@@ -104,7 +104,11 @@ function Main() {
         new Color(0, 200, 200),
         new Color(200, 200, 200)
     );
-    const stuff = new Stuff(chunkManager, cellStateColors, calculateTeam, minMap.updateMiniMap, updateMainCanvas);
+    const stuff = new Stuff(chunkManager, cellStateColors, calculateGeneration, function () {
+        updateMainCanvas();
+        calculateTeam();
+        minMap.updateMiniMap();
+    });
     gameWindow.style.backgroundColor = cellStateColors[0].toString();
 
     templateManager.loadTemplate();
