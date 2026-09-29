@@ -11,6 +11,34 @@ const cellStateColors = [new Color(10, 10, 10)];
 const teamID = 1;
 const out = console.log;
 
+/**
+ * Life rule per chunk: survive on surviveMin..surviveMax neighbours, born on birth.
+ * Conway everywhere, except inside region.
+ * ?surviveMin ?surviveMax ?birth ?ruleEverywhere=1
+ */
+const lifeRule = (function () {
+    const p = new URLSearchParams(location.search);
+    const conway = {surviveMin: 2, surviveMax: 3, birth: 3};
+    const video = {
+        surviveMin: +(p.get('surviveMin') ?? conway.surviveMin),
+        // B3/S12345
+        surviveMax: +(p.get('surviveMax') ?? 5),
+        birth: +(p.get('birth') ?? conway.birth)
+    };
+    return {
+        conway, video,
+        // chunk bounds
+        region: null,
+        everywhere: p.get('ruleEverywhere') === '1',
+        forChunk: function (chunkX, chunkY) {
+            if (this.everywhere) return this.video;
+            const r = this.region;
+            if (r === null) return this.conway;
+            return chunkX >= r.x0 && chunkX <= r.x1 && chunkY >= r.y0 && chunkY <= r.y1 ? this.video : this.conway;
+        }
+    };
+})();
+
 window.onload = Main;
 
 function Main() {
@@ -32,7 +60,9 @@ function Main() {
 
     createPlayButton(playState, navBar);
     const nextStepBtn = createIconButton('Next step', 'web/icon/next.svg', navBar);
-    nextStepBtn.onclick = calculateGeneration;
+    nextStepBtn.onclick = function () {
+        calculateGeneration();
+    };
 
     const generationCounter = createTextWithLabel('Gen: ', 'generationCounter', navBar);
     // generationCounter.textContent = location.href;
@@ -258,7 +288,10 @@ function Main() {
         updateLocation();
     }
 
-    function calculateGeneration() {
+    /**
+     * @param deferRepaint caller repaints itself
+     */
+    function calculateGeneration(deferRepaint) {
         let timer = window.performance.now();
         const needChange = chunkManager.calculateGeneration();
         timer = window.performance.now() - timer;
@@ -281,12 +314,11 @@ function Main() {
                 generationCount
             );
         }
-        updateMainCanvas(chunkCountX, chunkCountY, chunkPixelWidth, chunkPixelHeight);
-
-        calculateTeam();
-        minMap.updateMiniMap();
-
-        // renderAllChunks();
+        if (!deferRepaint) {
+            updateMainCanvas(chunkCountX, chunkCountY, chunkPixelWidth, chunkPixelHeight);
+            calculateTeam();
+            minMap.updateMiniMap();
+        }
 
         calculateTime.innerText = timer.toFixed(1) + 'ms';
         calculateCount.innerText = chunkManager.calculateCount.toString();

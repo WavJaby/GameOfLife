@@ -12,6 +12,16 @@
  */
 function Chunk(locX, locY, chunkWidth, chunkHeight, generationCount, world, chunkManager) {
     const thisInstance = this;
+    // rule, refreshed every generation
+    let surviveMin, surviveMax, birth;
+    updateRule();
+
+    function updateRule() {
+        const rule = lifeRule.forChunk(locX, locY);
+        surviveMin = thisInstance.surviveMin = rule.surviveMin;
+        surviveMax = thisInstance.surviveMax = rule.surviveMax;
+        birth = thisInstance.birth = rule.birth;
+    }
     const mainCanvas = world.mainCanvas;
     const canvasElement = document.createElement('canvas');
     const chunkCanvas = canvasElement.getContext('2d');
@@ -179,6 +189,7 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, generationCount, world, chun
 
     this.calculateChange = function (generationCount) {
         changeList.length = 0;
+        updateRule();
 
         if (thisInstance.cellDataCount === 0) {
             chunkManager.unloadChunk(locX, locY);
@@ -203,19 +214,19 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, generationCount, world, chun
             //現在是活的細胞
             if (team > 0) {
                 // 生命數量稀少或過多要死亡
-                if (count < 2 || count > 3)
+                if (count < surviveMin || count > surviveMax)
                     changeList.push([aliveX, aliveY, 0]);
             }
             //現在是死的細胞
             else {
                 //繁殖
-                if (count === 3)
+                if (count === birth)
                     changeList.push([aliveX, aliveY, 0]);
             }
 
             //移除不需要計算的細胞
-            if (team === 0 && count !== 3 ||
-                team > 0 && (count === 2 || count === 3)
+            if (team === 0 && count !== birth ||
+                team > 0 && (count >= surviveMin && count <= surviveMax)
             ) {
                 removeAliveCell(i);
                 i--;
@@ -313,7 +324,7 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, generationCount, world, chun
 
                 //加入關注列表
                 const lastCell = chunkMap[x][y];
-                if ((lastCell === 0 && nowCell === 3) || (lastCell > 0 && (nowCell < 2 || nowCell > 3))) {
+                if ((lastCell === 0 && nowCell === birth) || (lastCell > 0 && (nowCell < surviveMin || nowCell > surviveMax))) {
                     addActiveCell(x, y);
                 }
 
@@ -355,7 +366,8 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, generationCount, world, chun
 
                 //加入關注列表
                 const lastCell = nextChunk.chunkMap[x][y];
-                if ((lastCell === 0 && nowCell === 3) || (lastCell > 0 && (nowCell < 2 || nowCell > 3))) {
+                if ((lastCell === 0 && nowCell === nextChunk.birth) ||
+                    (lastCell > 0 && (nowCell < nextChunk.surviveMin || nowCell > nextChunk.surviveMax))) {
                     nextChunk.addActiveCell(x, y);
                 }
 
