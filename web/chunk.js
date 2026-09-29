@@ -30,6 +30,12 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, generationCount, world, chun
     let activeLength = 0;
     //要更改的cell
     const changeList = [];
+    // setCellsColor scratch, sorted by color
+    const cellsPerChunk = chunkWidth * chunkHeight;
+    const paintX = new Uint8Array(cellsPerChunk), paintY = new Uint8Array(cellsPerChunk);
+    const paintState = new Uint8Array(cellsPerChunk);
+    const sortedX = new Uint8Array(cellsPerChunk), sortedY = new Uint8Array(cellsPerChunk);
+    const paintCount = new Uint16Array(256), paintOffset = new Uint16Array(256);
 
     this.cellDataCount = 0;
     this.x = locX;
@@ -83,14 +89,12 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, generationCount, world, chun
         const chunkStartX = (locX - startX) * chunkWidth;
         const chunkStartY = (locY - startY) * chunkHeight;
 
+        // keep caller order, active cells depend on it
+        let changed = 0;
         for (const i of changeList) {
             const orgState = chunkMap[i[0]][i[1]];
             const state = i[2];
             if (orgState === state) continue;
-            chunkCanvas.fillStyle = mainCanvas.fillStyle = cellStateColors[state].toString();
-
-            chunkCanvas.fillRect(i[0], i[1], 1, 1);
-            mainCanvas.fillRect(chunkStartX + i[0], chunkStartY + i[1], 1, 1);
 
             // 告訴鄰居
             // x, y
@@ -113,6 +117,39 @@ function Chunk(locX, locY, chunkWidth, chunkHeight, generationCount, world, chun
                     calculateCellData(i[0], i[1], true);
             }
             addActiveCell(i[0], i[1]);
+
+            paintX[changed] = i[0];
+            paintY[changed] = i[1];
+            paintState[changed] = state;
+            changed++;
+            paintCount[state]++;
+        }
+        if (changed === 0) return;
+
+        // draw per color, one fillStyle each
+        let offset = 0;
+        for (let s = 0; s < paintCount.length; s++) {
+            const n = paintCount[s];
+            if (n === 0) continue;
+            paintOffset[s] = offset;
+            offset += n;
+        }
+        for (let k = 0; k < changed; k++) {
+            const slot = paintOffset[paintState[k]]++;
+            sortedX[slot] = paintX[k];
+            sortedY[slot] = paintY[k];
+        }
+        let at = 0;
+        for (let s = 0; s < paintCount.length; s++) {
+            const n = paintCount[s];
+            if (n === 0) continue;
+            paintCount[s] = 0;
+            chunkCanvas.fillStyle = mainCanvas.fillStyle = cellStateColors[s].css;
+            for (const end = at + n; at < end; at++) {
+                const x = sortedX[at], y = sortedY[at];
+                chunkCanvas.fillRect(x, y, 1, 1);
+                mainCanvas.fillRect(chunkStartX + x, chunkStartY + y, 1, 1);
+            }
         }
     }
 

@@ -61,7 +61,13 @@ function ChunkManager(world) {
         for (const chunk of needChange)
             chunk.calculateChunk();
 
-        this.calculateCount = Object.values(chunks).map(i => Object.values(i).reduce((a, b) => a + b.getCount(), 0)).reduce((a, b) => a + b, 0);
+        let count = 0;
+        for (const i in chunks) {
+            const cx = chunks[i];
+            for (const j in cx)
+                count += cx[j].getCount();
+        }
+        this.calculateCount = count;
         return needChange;
     }
 
